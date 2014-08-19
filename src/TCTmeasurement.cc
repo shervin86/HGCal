@@ -1,6 +1,6 @@
 #include <TCTmeasurement.h>
 #include <iostream>
-TGraph TCTmeasurement::GetWaveForm(void){
+TGraph TCTmeasurement::GetWaveForm(std::string graphName){
   Float_t x[MAX_SAMPLES], y[MAX_SAMPLES];
   float *_y = GetSamples();
 
@@ -19,6 +19,7 @@ TGraph TCTmeasurement::GetWaveForm(void){
   
   
   TGraph graph(nSamples, x, y);
+  graph.SetName(graphName.c_str());
   return graph;
 }
 

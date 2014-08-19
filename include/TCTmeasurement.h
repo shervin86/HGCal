@@ -30,7 +30,7 @@ class TCTmeasurement: public TCTmeasurementBase{
     return *this;
   };
 
-  TGraph GetWaveForm(void);
+  TGraph GetWaveForm(std::string graphName="Graph");
 };
 
 typedef std::vector<TCTmeasurement> TCTmeasurementCollection_t;
