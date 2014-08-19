@@ -75,7 +75,7 @@ class TCTimport{
     f >> value; //dt [s]
     meas.SetTimeScanUnit(value);
     //int i =0;
-    while(f.peek()!=10){
+    while(f.peek()!=10 && f.peek()!=10 && f.peek()!=EOF && f.peek()!=13){
       f >> value;
       //std::cout << i++ << "\t" << value << std::endl; 
       meas.AddMeasurement(value);

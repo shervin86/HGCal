@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 #include <cassert>
+#include <iostream>
 /** \class TCTmeasurementBase TCTmeasurementBase.h include/TCTmeasurementBase.h
     This class provides the basic informations contained in the txt
     files. Operations on the measurement and more advanced operations
@@ -19,10 +20,12 @@
       - remove assert in favor of exceptions
 */
 
-#define MAX_SAMPLES 1001
+#define MAX_SAMPLES 1005
 class TCTmeasurementBase{
  public:
-  TCTmeasurementBase(std::string& diodeName){};
+ TCTmeasurementBase(std::string& diodeName):
+  _nSamples(0)
+    {};
 
 
   inline TCTmeasurementBase& operator = (const TCTmeasurementBase& other){
@@ -57,7 +60,8 @@ class TCTmeasurementBase{
   inline void SetTimeScanUnit(float timeScanUnit){ _timeScanUnit=timeScanUnit; };    
 
   ///one	    value	    of	    the	    waveform,	    they	    are	    supposed	    to	    be contiguous
-  inline void AddMeasurement(float sample){                                        
+  inline void AddMeasurement(float sample){
+    std::cout << _nSamples << "\t" << sample << std::endl;
     assert(_nSamples<MAX_SAMPLES); // check that you have not reached the maximum number of samples
     _samples[_nSamples++]=sample; // add the new value and then increment the counter
   };
