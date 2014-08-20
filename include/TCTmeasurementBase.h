@@ -27,7 +27,22 @@ class TCTmeasurementBase{
   _nSamples(0)
     {};
 
+  TCTmeasurementBase(TCTmeasurementBase const& other){
+    _diodeName     = other._diodeName;
+    _annealing     = other._annealing;
+    _leakage       = other._leakage;
+    _temperature   = other._temperature;
+    _timeScanUnit  = other._timeScanUnit;
+    _bias          = other._bias;
+    _nSamples      = other._nSamples;
+    for(unsigned int i=0; i < _nSamples; i++){
+      _samples[i] = other._samples[i];
+    }
+  }
+    
+  ~TCTmeasurementBase(){
 
+  }
   inline TCTmeasurementBase& operator = (const TCTmeasurementBase& other){
     _diodeName     = other._diodeName;
     _annealing     = other._annealing;
@@ -35,14 +50,16 @@ class TCTmeasurementBase{
     _temperature   = other._temperature;
     _timeScanUnit  = other._timeScanUnit;
     _bias          = other._bias;
+    _nSamples      = other._nSamples;
+    for(unsigned int i=0; i < _nSamples; i++){
+      _samples[i] = other._samples[i];
+    }
     return *this;
   }
 
-  /* friend */
-  TCTmeasurementBase(const TCTmeasurementBase &other);
-  /*   this = base; */
-  /* }; */
-  
+  /// Acquiition time
+  inline void SetTime(std::string time){ _time = time; };
+   
   /// multiple annealing cycles are allowed
   inline void SetAnnealing(float annealingTime, float annealingTemp){
     _annealing.push_back(std::make_pair<float, float>(annealingTime, annealingTemp));
@@ -61,12 +78,13 @@ class TCTmeasurementBase{
 
   ///one	    value	    of	    the	    waveform,	    they	    are	    supposed	    to	    be contiguous
   inline void AddMeasurement(float sample){
-    std::cout << _nSamples << "\t" << sample << std::endl;
+    //   std::cout << _nSamples << "\t" << sample << std::endl;
     assert(_nSamples<MAX_SAMPLES); // check that you have not reached the maximum number of samples
     _samples[_nSamples++]=sample; // add the new value and then increment the counter
   };
 
   inline std::string GetDiodeName(void) const{ return _diodeName;   };
+  inline std::string GetTime(void)      const{ return _time;        };
   inline std::vector< std::pair<float, float> > GetAnnealing(void) const{ return _annealing;   };
   inline float GetTemperature(void)  const{ return _temperature; };
   inline float GetLeakage(void)      const{ return _leakage;     };
@@ -76,9 +94,9 @@ class TCTmeasurementBase{
   inline float* GetSamples(void)     { return _samples;     };
   inline const float* GetSamples(void)     const{ return _samples;     };
   
- private:
+ protected:
   std::string _diodeName;       ///< code of the diode
-
+  std::string _time;            ///< date of acquisition
   std::vector< std::pair<float,float> > _annealing; ///< annealing: vector of (time, temperature) pairs
   float _timeScanUnit; ///< time for sampling
   unsigned int   _nSamples;     ///< number of samples

@@ -20,7 +20,7 @@ class TCTmeasurement: public TCTmeasurementBase{
   };
   
 
-  TCTmeasurement& operator - (const TCTmeasurement& other){
+  TCTmeasurement& operator -= (const TCTmeasurement& other){
     unsigned int nSamples=GetN();
     assert(nSamples == other.GetN() && GetTimeScanUnit() == 1);// other.GetTimeScanUnit());
     const float *samples = other.GetSamples();
@@ -30,7 +30,21 @@ class TCTmeasurement: public TCTmeasurementBase{
     return *this;
   };
 
-  TGraph GetWaveForm(std::string graphName="Graph");
+  TGraph GetWaveForm(std::string graphName="Graph") const;
+
+  float GetWaveIntegral(float min, float max) const{
+    assert(min<max);
+    float integral=0.;
+    unsigned int binMax=(unsigned int)(max/_timeScanUnit);
+    unsigned int binMin=(unsigned int)(min/_timeScanUnit);
+
+    for(unsigned int i=(unsigned int)min/_timeScanUnit; i < binMax; i++){
+      integral += _samples[i];
+      //      std::cout << "integral = " << integral << "\t" << i << std::endl;
+    }
+    return integral;
+  };
+
 };
 
 typedef std::vector<TCTmeasurement> TCTmeasurementCollection_t;

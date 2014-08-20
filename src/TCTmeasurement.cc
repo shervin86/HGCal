@@ -1,8 +1,8 @@
 #include <TCTmeasurement.h>
 #include <iostream>
-TGraph TCTmeasurement::GetWaveForm(std::string graphName){
+TGraph TCTmeasurement::GetWaveForm(std::string graphName) const{
   Float_t x[MAX_SAMPLES], y[MAX_SAMPLES];
-  float *_y = GetSamples();
+  const float *_y = GetSamples();
 
   unsigned int nSamples = GetN();
   std::cout << nSamples << std::endl;
