@@ -33,9 +33,9 @@ all: ${LIBDIR}/TCTmeasurementBase.o ${LIBDIR}/TCTmeasurements.o ${LIBDIR}/TCTimp
 
 test: ${BUILDDIR}/test.exe 
 
-${BUILDDIR}/test.exe: ${BUILDDIR}/test.cpp ${INCLUDEDIR}/TCTimport.h ${LIBDIR}/TCTmeasurements.o	
+${BUILDDIR}/test.exe: ${BUILDDIR}/test.cpp ${INCLUDEDIR}/TCTimport.h ${LIBDIR}/TCTmeasurements.o ${LIBDIR}/configFileParser.o	
 	@echo "-> Making test program"
-	g++ ${OPT} ${INCLUDE} ${LIB} -o ${BUILDDIR}/test.exe ${BUILDDIR}/test.cpp ${LIBDIR}/TCTmeasurement.o ${LIBDIR}/TCTmeasurements.o
+	g++ ${OPT} ${INCLUDE} ${LIB} -o ${BUILDDIR}/test.exe ${BUILDDIR}/test.cpp ${LIBDIR}/*.o
 
 ${LIBDIR}/TCTmeasurementBase.o: include/TCTmeasurementBase.h
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTmeasurementBase.o include/TCTmeasurementBase.h
@@ -49,6 +49,9 @@ ${LIBDIR}/TCTimport.o: include/TCTimport.h ${INCLUDEDIR}/TCTmeasurement.h
 
 ${LIBDIR}/TCTmeasurements.o: ${INCLUDEDIR}/TCTmeasurements.h ${LIBDIR}/TCTmeasurement.o ${INCLUDEDIR}/TCTmeasurementBase.h
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTmeasurements.o ${SRCDIR}/TCTmeasurements.cc
+
+${LIBDIR}/configFileParser.o: ${INCLUDEDIR}/configFileParser.h ${SRCDIR}/configFileParser.cc
+	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/configFileParser.o ${SRCDIR}/configFileParser.cc
 
 
 link: 

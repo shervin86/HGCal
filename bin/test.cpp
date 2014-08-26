@@ -1,7 +1,8 @@
 /// test program
 #include <iostream>
-#include <fstream>
+//#include <fstream>
 #include <boost/program_options.hpp>
+#include "configFileParser.h"
 
 #include "TCTmeasurements.h"
 
@@ -23,7 +24,7 @@ int main(int argc, char **argv){
   std::string imgFormat, outDir;
 
   po::options_description inputOption("Input options");
-  std::string configFilename, tctFilename, ivFilename, cvFilename;
+  std::string baseDir, configFilename, tctFilename, ivFilename, cvFilename;
 
    //po::options_description cmd_line_options;
   //cmd_line_options.add(desc).add(fitOption).add(smearOption);
@@ -33,6 +34,7 @@ int main(int argc, char **argv){
     ("help,h","Help message")
     ;
   inputOption.add_options()
+    ("baseDir,d", po::value< std::string >(&baseDir)->default_value("data"), "directory with data files")
     ("configFile,f", po::value< std::string >(&configFilename), "File with list of measurements")
     ("tctFile", po::value< std::string >(&tctFilename), "single tct file") // for single validation
     ("ivFile", po::value< std::string >(&ivFilename), "single iv file") // for single validation
@@ -53,23 +55,28 @@ int main(int argc, char **argv){
   po::store(po::parse_command_line(argc, argv, desc), vm);
   po::notify(vm);    
 
+  if (vm.count("help")) {
+    std::cerr << desc << "\n";
+    return 1;
+  }
+
 
   //------------------------------ checking options
   if(!vm.count("configFile") && !vm.count("tctFile") && !vm.count("ivFile") && !vm.count("cvFile")){
     std::cerr << "[ERROR] No input file indicated (mandatory)" << std::endl;
+    std::cerr << inputOption << std::endl;
     exit(1);
   }
 
-  // input file parsing
-  std::ifstream f_in(configFilename.c_str());
-
-  
-
+  configFileParser parser(configFilename);
+  std::cout << baseDir+"/"+parser.GetTCTfilename(0) << std::endl;
+  TCTmeasurements l(baseDir+"/"+parser.GetTCTfilename(0));
+  int Vindex=0;
+  TGraph *g = l.GetWaveForm(Vindex, "FZ320N_04_DiodeL_5_2014_08_18_15_37_-700 reference ", "");
+  g->SaveAs("test.root");
   return 0;
 
 
-
-  int Vindex=40;
   Vindex=0;
   //------------------------------ list of acquisition
   std::vector<TCTmeasurements> FZ320N_ref;
@@ -109,7 +116,7 @@ int main(int argc, char **argv){
   //------------------------------ plot the waveforms
   TMultiGraph FZ320N_multigraph;
   FZ320N_multigraph.SetName("multi");
-  TGraph *g = FZ320N_ref[0].GetWaveForm(Vindex, "FZ320N_04_DiodeL_5_2014_08_18_15_37_-700 reference ", "");
+  g = FZ320N_ref[0].GetWaveForm(Vindex, "FZ320N_04_DiodeL_5_2014_08_18_15_37_-700 reference ", "");
   
   
   FZ320N_multigraph.Add(g,"l");
