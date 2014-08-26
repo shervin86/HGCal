@@ -68,8 +68,9 @@ int main(int argc, char **argv){
     exit(1);
   }
 
+  //------------------------------ parsing the config file
   configFileParser parser(configFilename);
-  std::cout << baseDir+"/"+parser.GetTCTfilename(0) << std::endl;
+  
   TCTmeasurements l(baseDir+"/"+parser.GetTCTfilename(0));
   int Vindex=0;
   TGraph *g = l.GetWaveForm(Vindex, "FZ320N_04_DiodeL_5_2014_08_18_15_37_-700 reference ", "");

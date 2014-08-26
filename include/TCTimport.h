@@ -2,7 +2,7 @@
 #define TCTimport_h
 /// program to import TCT mct files
 
-#include "TCTmeasurement.h"
+#include "TCTspectrum.h"
 
 #include <fstream>
 #include <iostream>
@@ -18,7 +18,7 @@ class TCTimport{
   /// basic constructor 
   TCTimport(){};
 
-  inline void ReadLine(std::ifstream& f, TCTmeasurement &meas){
+  inline void ReadLine(std::ifstream& f, TCTspectrum &meas){
     float value; 
     std::string line;
     for(int i=0; i<4; i++){ // skip fields
@@ -60,7 +60,7 @@ class TCTimport{
     return;
   }
 
-  inline TCTmeasurementCollection_t ImportFromFile(std::string filename){
+  inline TCTspectrumCollection_t ImportFromFile(std::string filename){
 
 
     std::cout << "[STATUS] Importing from file " <<  filename << std::endl;
@@ -78,7 +78,7 @@ class TCTimport{
     std::getline(f,line); // Diode header
     //    std::cout << line << std::endl;
     std::getline(f,line); // Diode name
-    TCTmeasurement meas(line);           // create the measurement
+    TCTspectrum meas(line);           // create the measurement
     std::cout << "Diode: " << line << std::endl;
 
     std::getline(f,line); // Annealing header
@@ -112,9 +112,9 @@ class TCTimport{
 
 
     // now start to read the different measurements
-    TCTmeasurementCollection_t measurements;
+    TCTspectrumCollection_t measurements;
     while(f.good() && f.peek()!=EOF){
-      TCTmeasurement newMeas = meas; // create a new waveform from the base one (the one keeping the general info)
+      TCTspectrum newMeas = meas; // create a new waveform from the base one (the one keeping the general info)
       ReadLine(f, newMeas);		      
       measurements.push_back(newMeas);
     }

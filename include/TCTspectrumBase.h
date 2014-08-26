@@ -1,13 +1,13 @@
 /// basic info from measurement
-#ifndef TCTmeasurementBase_h
-#define TCTmeasurementBase_h
+#ifndef TCTspectrumBase_h
+#define TCTspectrumBase_h
 
 #include <string>
 #include <utility>
 #include <vector>
 #include <cassert>
 #include <iostream>
-/** \class TCTmeasurementBase TCTmeasurementBase.h include/TCTmeasurementBase.h
+/** \class TCTspectrumBase TCTspectrumBase.h include/TCTspectrumBase.h
     This class provides the basic informations contained in the txt
     files. Operations on the measurement and more advanced operations
     should be done in another class inheriting from this.
@@ -21,13 +21,13 @@
 */
 
 #define MAX_SAMPLES 1005
-class TCTmeasurementBase{
+class TCTspectrumBase{
  public:
- TCTmeasurementBase(std::string& diodeName):
+ TCTspectrumBase(std::string& diodeName):
   _nSamples(0)
     {};
 
-  TCTmeasurementBase(TCTmeasurementBase const& other){
+  TCTspectrumBase(TCTspectrumBase const& other){
     _diodeName     = other._diodeName;
     _annealing     = other._annealing;
     _leakage       = other._leakage;
@@ -40,10 +40,10 @@ class TCTmeasurementBase{
     }
   }
     
-  ~TCTmeasurementBase(){
+  ~TCTspectrumBase(){
 
   }
-  inline TCTmeasurementBase& operator = (const TCTmeasurementBase& other){
+  inline TCTspectrumBase& operator = (const TCTspectrumBase& other){
     _diodeName     = other._diodeName;
     _annealing     = other._annealing;
     _leakage       = other._leakage;

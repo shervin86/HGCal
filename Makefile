@@ -37,17 +37,17 @@ ${BUILDDIR}/test.exe: ${BUILDDIR}/test.cpp ${INCLUDEDIR}/TCTimport.h ${LIBDIR}/T
 	@echo "-> Making test program"
 	g++ ${OPT} ${INCLUDE} ${LIB} -o ${BUILDDIR}/test.exe ${BUILDDIR}/test.cpp ${LIBDIR}/*.o
 
-${LIBDIR}/TCTmeasurementBase.o: include/TCTmeasurementBase.h
-	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTmeasurementBase.o include/TCTmeasurementBase.h
+${LIBDIR}/TCTspectrumBase.o: include/TCTspectrumBase.h
+	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTspectrumBase.o include/TCTspectrumBase.h
 
-${LIBDIR}/TCTmeasurement.o: ${INCLUDEDIR}/TCTmeasurement.h ${SRCDIR}/TCTmeasurement.cc ${INCLUDEDIR}/TCTmeasurementBase.h
-	echo "-> Making TCTmeasurement"
-	g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTmeasurement.o ${SRCDIR}/TCTmeasurement.cc
+${LIBDIR}/TCTspectrum.o: ${INCLUDEDIR}/TCTspectrum.h ${SRCDIR}/TCTspectrum.cc ${INCLUDEDIR}/TCTspectrumBase.h
+	echo "-> Making TCTspectrum"
+	g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTspectrum.o ${SRCDIR}/TCTspectrum.cc
 
 ${LIBDIR}/TCTimport.o: include/TCTimport.h ${INCLUDEDIR}/TCTmeasurement.h
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTimport.o include/TCTimport.h
 
-${LIBDIR}/TCTmeasurements.o: ${INCLUDEDIR}/TCTmeasurements.h ${LIBDIR}/TCTmeasurement.o ${INCLUDEDIR}/TCTmeasurementBase.h
+${LIBDIR}/TCTmeasurements.o: ${INCLUDEDIR}/TCTmeasurements.h ${LIBDIR}/TCTspectrum.o 
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTmeasurements.o ${SRCDIR}/TCTmeasurements.cc
 
 ${LIBDIR}/configFileParser.o: ${INCLUDEDIR}/configFileParser.h ${SRCDIR}/configFileParser.cc

@@ -3,7 +3,7 @@
 
 /// Contains the information of one acquisition
 
-#include "TCTmeasurement.h"
+#include "TCTspectrum.h"
 #include "TCTimport.h"
 
 #include <cstdlib>
@@ -18,7 +18,7 @@ class TCTmeasurements{
   TCTmeasurements(std::string filename){
     acquisition = importer.ImportFromFile(filename);
 
-    for(TCTmeasurementCollection_t::const_iterator itr = acquisition.begin();
+    for(TCTspectrumCollection_t::const_iterator itr = acquisition.begin();
 	itr != acquisition.end();
 	itr++){
       biases.insert(std::pair<float, unsigned int>( itr->GetBias(), itr-acquisition.begin()));
@@ -49,7 +49,7 @@ class TCTmeasurements{
     return *this;
   };
 
-  TCTmeasurements& operator-=(const TCTmeasurement& other){
+  TCTmeasurements& operator-=(const TCTspectrum& other){
     unsigned int size=acquisition.size();
     for(unsigned int i=0; i < size; i++){
       //   std::cout << "--> " << acquisition[i].GetN() << "\t" << other.GetN()<< std::endl;
@@ -84,11 +84,11 @@ class TCTmeasurements{
   };
 
   //average over all the acquisitions of this measurement, regardless the bias voltage applied (biasCheck==false)
-  TCTmeasurement Average(bool checkBias=false)const{ 
+  TCTspectrum Average(bool checkBias=false)const{ 
     assert(checkBias==false); /// \todo implement the case of biasCheck
-    TCTmeasurement meas=acquisition[0];
+    TCTspectrum meas=acquisition[0];
     meas.clear(); // reset the values
-    for(TCTmeasurementCollection_t::const_iterator itr = acquisition.begin();
+    for(TCTspectrumCollection_t::const_iterator itr = acquisition.begin();
 	itr!=acquisition.end();
 	itr++){
       //std::cout << meas.GetSamples()[10] << "\t" << itr->GetSamples()[10];
@@ -109,7 +109,7 @@ class TCTmeasurements{
   void Average(std::vector<TCTmeasurements> others, bool checkBias=false){
     
     this->reset(); // remove all the measurements
-    TCTmeasurement m = others.begin()->acquisition[0];
+    TCTspectrum m = others.begin()->acquisition[0];
     acquisition.push_back(m);
     this->clear(); // initialize to 0 the sum
     std::cout << "Average over " << others.size() << " measurements" << std::endl;
@@ -125,7 +125,7 @@ class TCTmeasurements{
     return;
   }
 
-  TCTmeasurement& GetAverageMeasurement(){
+  TCTspectrum& GetAverageMeasurement(){
     return acquisition[0];
   }
   /// index = acquisition index
@@ -197,7 +197,7 @@ class TCTmeasurements{
 
   
  public:
-  TCTmeasurementCollection_t acquisition;
+  TCTspectrumCollection_t acquisition;
 
   private:
   TCTimport importer;

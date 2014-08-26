@@ -1,26 +1,26 @@
 /// basic info from measurement
-#ifndef TCTmeasurement_h
-#define TCTmeasurement_h
+#ifndef TCTspectrum_h
+#define TCTspectrum_h
 
 
-/** \class TCTmeasurement TCTmeasurement.h include/TCTmeasurement.h
+/** \class TCTspectrum TCTspectrum.h include/TCTspectrum.h
     This class provides the high level informations contained of TCT measurement from txt
     files. Contains also manipulation and advanced methods of the measurement
 */
 
-#include "TCTmeasurementBase.h"
+#include "TCTspectrumBase.h"
 
 #include <TGraph.h>
 
-class TCTmeasurement: public TCTmeasurementBase{
+class TCTspectrum: public TCTspectrumBase{
  public:
- TCTmeasurement(TCTmeasurementBase base): TCTmeasurementBase(base){};
+ TCTspectrum(TCTspectrumBase base): TCTspectrumBase(base){};
   
- TCTmeasurement(std::string diodeName): TCTmeasurementBase(diodeName){
+ TCTspectrum(std::string diodeName): TCTspectrumBase(diodeName){
   };
   
   /// \todo fixit, assert should work
-  TCTmeasurement& operator -= (const TCTmeasurement& other){
+  TCTspectrum& operator -= (const TCTspectrum& other){
     unsigned int nSamples=GetN();
     //std::cout << other.GetN() << "\t" << nSamples << std::endl;
     //assert(nSamples == other.GetN() && GetTimeScanUnit() == other.GetTimeScanUnit());// other.GetTimeScanUnit());
@@ -33,7 +33,7 @@ class TCTmeasurement: public TCTmeasurementBase{
     }else return *this;
   };
 
-  TCTmeasurement& operator += (const TCTmeasurement& other){
+  TCTspectrum& operator += (const TCTspectrum& other){
     unsigned int nSamples=GetN();
     assert(nSamples == other.GetN() && GetTimeScanUnit() == other.GetTimeScanUnit());// other.GetTimeScanUnit());
     const float *samples = other.GetSamples();
@@ -43,7 +43,7 @@ class TCTmeasurement: public TCTmeasurementBase{
     return *this;
   };
 
-  TCTmeasurement& operator /= (const float scale){
+  TCTspectrum& operator /= (const float scale){
     unsigned int nSamples=GetN();
     //assert(nSamples == other.GetN() && GetTimeScanUnit() == 1);// other.GetTimeScanUnit());
     //const float *samples = other.GetSamples();
@@ -53,7 +53,7 @@ class TCTmeasurement: public TCTmeasurementBase{
     return *this;
   };
 
-  TCTmeasurement& operator = (const float scale){
+  TCTspectrum& operator = (const float scale){
     unsigned int nSamples=GetN();
     //assert(nSamples == other.GetN() && GetTimeScanUnit() == 1);// other.GetTimeScanUnit());
     //const float *samples = other.GetSamples();
@@ -84,7 +84,7 @@ class TCTmeasurement: public TCTmeasurementBase{
   
 };
 
-typedef std::vector<TCTmeasurement> TCTmeasurementCollection_t;
+typedef std::vector<TCTspectrum> TCTspectrumCollection_t;
 
 
 #endif
