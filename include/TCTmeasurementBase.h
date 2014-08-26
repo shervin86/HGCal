@@ -83,6 +83,7 @@ class TCTmeasurementBase{
     _samples[_nSamples++]=sample; // add the new value and then increment the counter
   };
 
+  inline void AddMeasurement(float time, float sample){assert(false);}; ///not implemented
   inline std::string GetDiodeName(void) const{ return _diodeName;   };
   inline std::string GetTime(void)      const{ return _time;        };
   inline std::vector< std::pair<float, float> > GetAnnealing(void) const{ return _annealing;   };

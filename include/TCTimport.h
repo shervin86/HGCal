@@ -6,6 +6,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <cstdlib>
 /** \class TCTimport TCTimport.h include/TCTimport.h
     
     \todo 
@@ -26,8 +27,9 @@ class TCTimport{
     
     
     f >> value;  // bias
+    
     meas.SetBias(value);
-
+    //    std::cout << value << meas.GetBias() << std::endl;
     f >> value; // Attenuator [10 dB]
     f >> value; // WF-Peakheight [V]
     f >> value; // Leakage [A]
@@ -91,8 +93,11 @@ class TCTimport{
     for(int i=0; i<58; i++){ // skip lines
       std::getline(f,line); // 
     }
-
+    
     std::getline(f,line); // Scan started
+    if(line.find("Scan")!=0){
+      std::getline(f,line); // Scan started
+    }
     std::getline(f,line); // Date and time
     unsigned int hh,min,dd,mm,yyyy;
     sscanf(line.c_str(), "%d:%d on %d/%d/%d (dd/mm/yyyy)", &hh, &min, &dd, &mm, &yyyy);
@@ -100,7 +105,6 @@ class TCTimport{
     sprintf(time, "%04d_%02d_%02d_%02d_%02d", yyyy, mm, dd, hh, min);
     std::cout << "Acquisition time: " << time << std::endl;
     meas.SetTime(time);
-
     std::getline(f,line); // skip
     std::getline(f,line); // skip
     
@@ -111,9 +115,12 @@ class TCTimport{
     TCTmeasurementCollection_t measurements;
     while(f.good() && f.peek()!=EOF){
       TCTmeasurement newMeas = meas; // create a new waveform from the base one (the one keeping the general info)
-      ReadLine(f, newMeas);
+      ReadLine(f, newMeas);		      
       measurements.push_back(newMeas);
     }
+    float lastStepValue=measurements.rbegin()->GetBias();
+    if(lastStepValue!=0 && abs(lastStepValue)<0.001) measurements.pop_back(); /// remove the last point if not significative
+    std::cout << "Bias scan from: " << measurements.begin()->GetBias() << " to " << measurements.rbegin()->GetBias() << std::endl;
     return measurements;
   };
   

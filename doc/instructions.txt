@@ -1,0 +1,14 @@
+/**
+\page instruction Instruction
+-# Put the information about the measurements in a config file under the data/ directory according to the following syntax:
+\verbatim
+# diode                irradiation	Temperature	TCTdate			TCTreference		TCTreferenceDate	TCTbaseline TCTbaselineDate IVdate CVdate
+FZ320N_04_DiodeL_5     -		-		19/08/2014-16:42	-			-			-	    -		    -    -
+FZ320N_010_DiodeL_11   4e14N		-30	   	21/08/2014-23:08	FZ320N_03_DiodeL_9	19/08/2014-16:42	-	    -		    -    -
+\endverbatim
+
+-# the program will automatically provide validation plots for all the measurements and all the samples
+-# the information about the reference is used to plot the Charge Collection Efficiency (CCE)
+-# the information about the baseline measurement is used to subtract the baseline from the TCT spectra
+
+*/
