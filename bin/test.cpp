@@ -6,10 +6,23 @@
 
 #include "TCTmeasurements.h"
 
-#include <TGraph.h>
+#include <TFile.h>
+#include <TGraphErrors.h>
 #include <TMultiGraph.h>
+#include <TH2F.h>
+
 /// \file test.cpp bin/test.cpp 
 /// for all the diodes indicatd in the config file this program produces validation plots of single measurements
+Int_t fPaletteColor[100] = {50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 
+			    60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 
+			    70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 
+			    80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 
+			    90, 91, 92, 93, 94, 95, 96, 97, 98, 99,
+                            100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
+                            110, 111, 112, 113, 114, 115, 116, 117, 118, 119,
+                            120, 121, 122, 123, 124, 125, 126, 127, 128, 129,
+                            130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+                            140, 141, 142, 143, 144, 145, 146, 147, 148, 149};
 
 int main(int argc, char **argv){
 
@@ -70,8 +83,251 @@ int main(int argc, char **argv){
 
   //------------------------------ parsing the config file
   configFileParser parser(configFilename);
+
+  typedef std::vector<TCTmeasurements> TCTmeasurementsCollection_t;
+  typedef std::map<std::string, TCTmeasurementsCollection_t> measMap_t;
+  typedef std::map<std::string, TCTmeasurements> measurementMap_t;
   
-  TCTmeasurements l(baseDir+"/"+parser.GetTCTfilename(0));
+  // for every line in the config file allocate a new TCTmeasurements: need to read all the files
+
+  measMap_t baselinesMap, referencesMap, irradiatedsMap;
+  for(unsigned int i=0; i < parser.size(); i++){
+    std::string type = parser.GetType(i);
+    if(type.find("bas")!=std::string::npos)
+      baselinesMap[type].push_back(TCTmeasurements(baseDir+"/"+parser.GetTCTfilename(i)));
+    else if(type.find("ref")!=std::string::npos)
+      referencesMap[type].push_back(TCTmeasurements(baseDir+"/"+parser.GetTCTfilename(i)));
+    else if(type.find("irr")!=std::string::npos)
+      irradiatedsMap[type].push_back(TCTmeasurements(baseDir+"/"+parser.GetTCTfilename(i)));
+    else{
+      std::cout << type << std::endl;
+      assert(false); /// \todo replace with message and exception
+    }
+    std::cout << parser.GetTCTfilename(i, baseDir) << std::endl;;
+  }
+
+  // now you have all the measurements as vectors
+
+
+  measurementMap_t baselineMap, referenceMap;
+
+  // for every baseline type make the average of all the measurements
+  for(measMap_t::const_iterator m_itr=baselinesMap.begin();  // loop over different baselines
+      m_itr!=baselinesMap.end();
+      m_itr++){
+    baselineMap[m_itr->first]=TCTmeasurements(); // declare the new baseline (will be the average)
+    baselineMap[m_itr->first].Average(m_itr->second); // assign the average over all the measurements of the same type
+  }
+
+  TFile outFile("outFile.root","RECREATE");
+  outFile.cd();
+
+
+  //--------------- plot baseline averages
+  // plot individual measurements and the average to check
+  for(measMap_t::const_iterator m_itr=baselinesMap.begin();  // loop over different baselines
+      m_itr!=baselinesMap.end();
+      m_itr++){
+    TMultiGraph baselineGraphs;
+    baselineGraphs.SetName(m_itr->first.c_str());
+    
+    for(TCTmeasurementsCollection_t::const_iterator v_itr=m_itr->second.begin(); // loop over baselines of the same type
+    	v_itr!=m_itr->second.end();
+    	v_itr++){
+      for(unsigned int i=0; i < v_itr->size(); i++){ // loop over all bias voltage
+	TGraph *gg = v_itr->GetWaveForm(i,"",""); //
+	baselineGraphs.Add(gg, "p");
+      }
+    }
+    std::string name=m_itr->first;
+    TGraphErrors *gg = baselineMap[m_itr->first].GetAverageWaveForm(name,"");
+    gg->SetLineColor(kBlue);
+    gg->SetFillColor(kAzure-4);
+    gg->SetLineWidth(1);
+    baselineGraphs.Add(gg,"l3");
+    baselineGraphs.Write();
+  }  
+
+  
+  //--------------- plot of all the references
+  for(measMap_t::const_iterator m_itr=referencesMap.begin();
+      m_itr!=referencesMap.end();
+      m_itr++){
+    TMultiGraph baselineGraphs;
+    baselineGraphs.SetName((m_itr->first+"_baseline").c_str());
+    for(TCTmeasurementsCollection_t::const_iterator v_itr=m_itr->second.begin(); // loop over baselines of the same type
+    	v_itr!=m_itr->second.end();
+    	v_itr++){
+      for(unsigned int i=0; i < v_itr->size(); i++){ // loop over all bias voltage
+	TGraph *gg = v_itr->GetWaveForm(i,"",""); //
+	gg->SetLineColor(fPaletteColor[i]);
+	gg->SetLineStyle(2);
+	baselineGraphs.Add(gg, "l");
+      }
+    }
+    // TH2F h("paletteHist","",2000,-1000,1000,100,0,100);    
+    // for(float val=-1000; val<=1000; val+=10){
+    //   h.Fill(val,0.,val);
+    // }
+    // h.Write();
+
+    baselineGraphs.Write();
+  }    
+
+
+
+  //--------------- remove baseline from reference and plot them
+  for(measMap_t::iterator m_itr=referencesMap.begin();
+      m_itr!=referencesMap.end();
+      m_itr++){
+    
+    TMultiGraph baselineGraphs;
+    baselineGraphs.SetName(m_itr->first.c_str());
+   
+    for(TCTmeasurementsCollection_t::iterator v_itr=m_itr->second.begin(); // loop over references of the same type
+    	v_itr!=m_itr->second.end();
+    	v_itr++){
+      std::string basName = (parser.find(m_itr->first))->second.GetBaseline();
+
+      // subtract the baseline 
+      //      std::cout << (parser.find(m_itr->first))->second.type << "\t" << basName << "\t" << std::endl;
+      (*v_itr) -= baselineMap[basName].GetAverageMeasurement();
+
+      for(unsigned int i=0; i < v_itr->size(); i++){ // loop over all bias voltage
+	TGraph *gg = v_itr->GetWaveForm(i,"",""); //
+	gg->SetLineColor(fPaletteColor[i]);
+	gg->SetLineStyle(1);
+	baselineGraphs.Add(gg, "l");
+      }
+    }
+    baselineGraphs.Write();
+  
+  }
+
+
+
+  // for every reference type make the average of all the measurements
+  for(measMap_t::const_iterator m_itr=referencesMap.begin();  // loop over different measurements
+      m_itr!=referencesMap.end();
+      m_itr++){
+    //referenceMap[m_itr->first]=TCTmeasurements(); // declare the new reference (will be the average)
+    //referenceMap[m_itr->first].Average(m_itr->second); // assign the average over all the measurements of the same type
+    referenceMap[m_itr->first]=m_itr->second[0];
+  }
+
+
+  //--------------- remove baseline from measurements and plot them
+  for(measMap_t::iterator m_itr=irradiatedsMap.begin();
+      m_itr!=irradiatedsMap.end();
+      m_itr++){
+    
+    TMultiGraph baselineGraphs;
+    baselineGraphs.SetName(m_itr->first.c_str());
+   
+    for(TCTmeasurementsCollection_t::iterator v_itr=m_itr->second.begin(); // loop over references of the same type
+    	v_itr!=m_itr->second.end();
+    	v_itr++){
+      std::string basName = (parser.find(m_itr->first))->second.GetBaseline();
+
+      // subtract the baseline 
+      //      std::cout << (parser.find(m_itr->first))->second.type << "\t" << basName << "\t" << std::endl;
+      (*v_itr) -= baselineMap[basName].GetAverageMeasurement();
+
+      for(unsigned int i=0; i < v_itr->size(); i++){ // loop over all bias voltage
+	TGraph *gg = v_itr->GetWaveForm(i,"",""); //
+	gg->SetLineColor(fPaletteColor[i]);
+	gg->SetLineStyle(1);
+	baselineGraphs.Add(gg, "l");
+      }
+    }
+    baselineGraphs.Write();
+  
+  }
+
+
+
+  //--------------- plots of QvsV for references
+  for(measMap_t::iterator m_itr=referencesMap.begin();
+      m_itr!=referencesMap.end();
+      m_itr++){
+
+    TMultiGraph baselineGraphs;
+    baselineGraphs.SetName(m_itr->first.c_str());
+    baselineGraphs.SetTitle("QvsV");
+    for(TCTmeasurementsCollection_t::iterator v_itr=m_itr->second.begin(); // loop over references of the same type
+    	v_itr!=m_itr->second.end();
+    	v_itr++){
+            
+      for(unsigned int i=0; i < v_itr->size(); i++){ // loop over all bias voltage
+	TGraph *gg = v_itr->GetQvsV(0.85e-7,1.00e-7); //
+	//TGraph *gg = v_itr->GetQvsV(1.00e-7,1.10e-7); //
+	gg->SetLineColor(fPaletteColor[i]);
+	gg->SetLineStyle(1);
+	gg->SetMarkerStyle(20);
+	baselineGraphs.Add(gg, "p");
+      }
+    }
+    baselineGraphs.Write();
+  }
+
+  //--------------- plots of QvsV for irradiate diodes
+  for(measMap_t::iterator m_itr=irradiatedsMap.begin();
+      m_itr!=irradiatedsMap.end();
+      m_itr++){
+
+    TMultiGraph baselineGraphs;
+    baselineGraphs.SetName(m_itr->first.c_str());
+    baselineGraphs.SetTitle("QvsV");
+    for(TCTmeasurementsCollection_t::iterator v_itr=m_itr->second.begin(); // loop over references of the same type
+    	v_itr!=m_itr->second.end();
+    	v_itr++){
+            
+      for(unsigned int i=0; i < v_itr->size(); i++){ // loop over all bias voltage
+	TGraph *gg = v_itr->GetQvsV(0.85e-7,1.00e-7); //
+	//TGraph *gg = v_itr->GetQvsV(1.00e-7,1.10e-7); //
+	gg->SetLineColor(fPaletteColor[i]);
+	gg->SetLineStyle(1);
+	gg->SetMarkerStyle(20);
+	baselineGraphs.Add(gg, "p");
+      }
+    }
+    baselineGraphs.Write();
+  }
+
+  //--------------- plots of CCE 
+  for(measMap_t::iterator m_itr=irradiatedsMap.begin();
+      m_itr!=irradiatedsMap.end();
+      m_itr++){
+
+    TMultiGraph baselineGraphs;
+    baselineGraphs.SetName(m_itr->first.c_str());
+    baselineGraphs.SetTitle("CCEvsV");
+    for(TCTmeasurementsCollection_t::iterator v_itr=m_itr->second.begin(); // loop over references of the same type
+    	v_itr!=m_itr->second.end();
+    	v_itr++){
+      TCTmeasurements& ref= referenceMap[parser.find(m_itr->first)->second.GetReference()];
+   
+      for(unsigned int i=0; i < v_itr->size(); i++){ // loop over all bias voltage
+	TGraph *gg = v_itr->GetCCEvsV(ref,0.85e-7,1.00e-7); //
+	//TGraph *gg = v_itr->GetQvsV(1.00e-7,1.10e-7); //
+	gg->SetLineColor(fPaletteColor[i]);
+	gg->SetLineStyle(1);
+	gg->SetMarkerStyle(20);
+	baselineGraphs.Add(gg, "p");
+      }
+    }
+    baselineGraphs.Write();
+  }
+
+
+  outFile.Close();
+
+  
+  
+  
+
+  return 0;
+#ifdef shervin
   int Vindex=0;
   TGraph *g = l.GetWaveForm(Vindex, "FZ320N_04_DiodeL_5_2014_08_18_15_37_-700 reference ", "");
   g->SaveAs("test.root");
@@ -165,7 +421,7 @@ int main(int argc, char **argv){
   TGraph FZ320N_CCE_2_0_QvsV = CCE.GetCCEvsV(FZ320N_ref[0],86e-9,96e-9);
   FZ320N_CCE_2_0_QvsV.SaveAs("f2.root");
 
-
+#endif
   return 0;
 }
 

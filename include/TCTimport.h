@@ -47,6 +47,10 @@ class TCTimport{
     //int i =0;
     while(f.peek()!=10 && f.peek()!=10 && f.peek()!=EOF && f.peek()!=13){
       f >> value;
+      if(value<-1 || value>1){
+	std::cerr << "[ERROR] Reading file error: value = " << value << std::endl;
+	exit(1);
+      }
       //std::cout << i++ << "\t" << value << std::endl; 
       meas.AddMeasurement(value);
     }
@@ -68,7 +72,7 @@ class TCTimport{
  
     
     std::ifstream f(filename.c_str());
-    assert(f.good());
+    assert(f.good()); /// 
     
 
     std::getline(f,line); // first line of header
@@ -78,8 +82,12 @@ class TCTimport{
     std::getline(f,line); // Diode header
     //    std::cout << line << std::endl;
     std::getline(f,line); // Diode name
+    if(*line.rbegin()==13){ // 13=carriage return
+      line.resize(line.size()-1); //line.pop_back() in c++11
+    }
+    //std::cout << "Back=" << (int)line[line.size()-1] << std::endl;
     TCTspectrum meas(line);           // create the measurement
-    std::cout << "Diode: " << line << std::endl;
+    //std::cout << "Diode: " << line << "ciao" << std::endl;
 
     std::getline(f,line); // Annealing header
     //std::cout << line << std::endl;
@@ -99,7 +107,11 @@ class TCTimport{
       std::getline(f,line); // Scan started
     }
     std::getline(f,line); // Date and time
-    unsigned int hh,min,dd,mm,yyyy;
+   if(*line.rbegin()==13){ // 13=carriage return
+      line.resize(line.size()-1); //line.pop_back() in c++11
+    }
+  
+   unsigned int hh,min,dd,mm,yyyy;
     sscanf(line.c_str(), "%d:%d on %d/%d/%d (dd/mm/yyyy)", &hh, &min, &dd, &mm, &yyyy);
     char time[30]; 
     sprintf(time, "%04d_%02d_%02d_%02d_%02d", yyyy, mm, dd, hh, min);

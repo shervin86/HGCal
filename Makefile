@@ -22,7 +22,7 @@ else
 	ROOFIT_LIB+=$(ROOFIT_LIBDIR)
 endif
 
-OPT=-Wall
+OPT=-Wall -std=c++0x
 
 INCLUDE=-I$(INCLUDEDIR) -I$(ROOT_INCLUDE)  -I$(ROOFIT_INCLUDE) -I$(BOOST)/include
 LIB=-lboost_program_options ${ROOT_LIB}
@@ -35,14 +35,14 @@ test: ${BUILDDIR}/test.exe
 
 ${BUILDDIR}/test.exe: ${BUILDDIR}/test.cpp ${INCLUDEDIR}/TCTimport.h ${LIBDIR}/TCTmeasurements.o ${LIBDIR}/configFileParser.o	
 	@echo "-> Making test program"
-	g++ ${OPT} ${INCLUDE} ${LIB} -o ${BUILDDIR}/test.exe ${BUILDDIR}/test.cpp ${LIBDIR}/*.o
+	@g++ ${OPT} -Wunused-value -Wunused-variable ${INCLUDE} ${LIB} -o ${BUILDDIR}/test.exe ${BUILDDIR}/test.cpp ${LIBDIR}/*.o
 
 ${LIBDIR}/TCTspectrumBase.o: include/TCTspectrumBase.h
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTspectrumBase.o include/TCTspectrumBase.h
 
 ${LIBDIR}/TCTspectrum.o: ${INCLUDEDIR}/TCTspectrum.h ${SRCDIR}/TCTspectrum.cc ${INCLUDEDIR}/TCTspectrumBase.h
-	echo "-> Making TCTspectrum"
-	g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTspectrum.o ${SRCDIR}/TCTspectrum.cc
+	@echo "-> Making TCTspectrum"
+	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTspectrum.o ${SRCDIR}/TCTspectrum.cc
 
 ${LIBDIR}/TCTimport.o: include/TCTimport.h ${INCLUDEDIR}/TCTmeasurement.h
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTimport.o include/TCTimport.h
@@ -57,3 +57,6 @@ ${LIBDIR}/configFileParser.o: ${INCLUDEDIR}/configFileParser.h ${SRCDIR}/configF
 link: 
 	@./linkdef.sh
 	@rootcint -f lib/TCTlib.cxx -c ${INCLUDEDIR}/*.h
+
+clean:
+	rm ${LIBDIR}/*.o 

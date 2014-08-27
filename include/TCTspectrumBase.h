@@ -24,11 +24,13 @@
 class TCTspectrumBase{
  public:
  TCTspectrumBase(std::string& diodeName):
+  _diodeName(diodeName),
   _nSamples(0)
     {};
 
   TCTspectrumBase(TCTspectrumBase const& other){
     _diodeName     = other._diodeName;
+    _time          = other._time;
     _annealing     = other._annealing;
     _leakage       = other._leakage;
     _temperature   = other._temperature;
@@ -45,6 +47,7 @@ class TCTspectrumBase{
   }
   inline TCTspectrumBase& operator = (const TCTspectrumBase& other){
     _diodeName     = other._diodeName;
+    _time          = other._time;
     _annealing     = other._annealing;
     _leakage       = other._leakage;
     _temperature   = other._temperature;
