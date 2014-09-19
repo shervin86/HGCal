@@ -1,4 +1,20 @@
 /**
  * \mainpage
- \ref instruction
+    \ref instruction
+
+    Logic:
+ - read the config file: information about the config file structure \see configFileContent::operator<<	
+ - for each line of the config file read the measurement file (.mct, .iv, .cv) and store them in maps:
+   - one map for all the baseline measurements
+   - one map for all the reference measurements
+   - one map for all the measurements of irradiated diodes
+ - make the average of the baselines of the same type and plot all the baseline measurements and the average one
+ - subtract the baseline from each reference measurement
+ - make the average of the different reference measurements of the same type -> not implemented yet, assuming only one measurement
+ - subtract the baseline from each irradiated diode measurement
+ - make the average of the different irradiated diode measurement -> not implemented yet, assuming only one measurement
+ - plot all the spectra for the irradiated diodes
+ - calculate and plot QvsV for the references
+ - calculate and plot QvsV for the irradiated diodes
+ - calculate and plot the CCEvsV for the irradiated diodes
 */

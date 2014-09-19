@@ -11,4 +11,44 @@ FZ320N_010_DiodeL_11   4e14N		-30	   	21/08/2014-23:08	FZ320N_03_DiodeL_9	19/08/
 -# the information about the reference is used to plot the Charge Collection Efficiency (CCE)
 -# the information about the baseline measurement is used to subtract the baseline from the TCT spectra
 
+
+
+
+\section TCTvalidation TCT measurement on-the-fly validation
+run the program with following options:
+\verbatim
+\endverbatim
+./bin/test.cpp --tctFile youFile.mct
+
+
+\section Checks Checks
+ - check compatibility between baseline measurements
+   - put the measurements as different baselines in a separate config file
+   - check that the std. dev. of the different measurements are compatible 
+   - check that mean of different measurements are compatible (i.e. difference in mean << std. dev. single measurement)
+   - then you are allowed to put all the baselines together
+ - check that for each reference, you have the correct baseline
+   - the spectrum of each reference - baseline should have average 0 and std. dev. = to the baseline std. dev. in the region before the signal
+   - check the ref_600 plot's baseline
+
+
+\section IV IV measurements
+- Put the measurements in the list.list config file
+- Run the test.exe program
+- put all the IV TGraph in one file:
+\verbatim 
+hadd -f t.root tmp/IV/*.root
+\endverbatim
+ - run the macro to make the plots
+
+
+List of performed measurements from list.list file
+ \code
+ ./scripts/diodeMeasurementTable.sh
+\endcode
+
+remove jumping points in CV and IV measurements
+ - average of 3 points before and 3 points after
+ - RMS 3 points before, 3 points after
+ - if point not within 1 RMS, the point is rejected
 */

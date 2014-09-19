@@ -72,7 +72,10 @@ class TCTimport{
  
     
     std::ifstream f(filename.c_str());
-    assert(f.good()); /// 
+    if(!f.good()){
+      std::cerr << "[ERROR] File " << filename << " not readable" << std::endl;
+      exit(1);
+    }
     
 
     std::getline(f,line); // first line of header
@@ -115,7 +118,7 @@ class TCTimport{
     sscanf(line.c_str(), "%d:%d on %d/%d/%d (dd/mm/yyyy)", &hh, &min, &dd, &mm, &yyyy);
     char time[30]; 
     sprintf(time, "%04d_%02d_%02d_%02d_%02d", yyyy, mm, dd, hh, min);
-    std::cout << "Acquisition time: " << time << std::endl;
+    //std::cout << "   Acquisition time: " << time << std::endl;
     meas.SetTime(time);
     std::getline(f,line); // skip
     std::getline(f,line); // skip
@@ -132,7 +135,7 @@ class TCTimport{
     }
     float lastStepValue=measurements.rbegin()->GetBias();
     if(lastStepValue!=0 && abs(lastStepValue)<0.001) measurements.pop_back(); /// remove the last point if not significative
-    std::cout << "Bias scan from: " << measurements.begin()->GetBias() << " to " << measurements.rbegin()->GetBias() << std::endl;
+    std::cout << "   Bias scan from: " << measurements.begin()->GetBias() << " to " << measurements.rbegin()->GetBias() << std::endl;
     return measurements;
   };
   

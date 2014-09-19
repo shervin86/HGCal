@@ -7,17 +7,21 @@ TCTspectrum TCTmeasurements::Average(bool checkBias)const{
   assert(checkBias==false); /// \todo implement the case of biasCheck
   TCTspectrum meas=acquisition[0];
   meas.clear(); // reset the values
+  unsigned int n=0;
   for(TCTspectrumCollection_t::const_iterator itr = acquisition.begin();
       itr!=acquisition.end();
       itr++){
     //std::cout << meas.GetSamples()[10] << "\t" << itr->GetSamples()[10];
-    meas+=*itr;
-    //std::cout << "\t" << meas.GetSamples()[10] << std::endl;
+    if(itr->GetBias()!=0)
+      meas+=*itr;
+    //else 
+    //  std::cout << "\t" << meas.GetSamples()[9] << itr->GetBias() << std::endl;
+    n++;
   }
-  meas/=acquisition.size();
+  meas/=n; //acquisition.size();
   //std::cout << "\t" << meas.GetSamples()[10] << std::endl;
   
-  std::cout << "Average over " << acquisition.size() << " acquisitions" << std::endl;
+  //std::cout << "Average over " << acquisition.size() << " acquisitions" << std::endl;
   return meas;
 }
 
@@ -58,7 +62,7 @@ void TCTmeasurements::Average(std::vector<TCTmeasurements> others, bool checkBia
   acquisition.push_back(m);
   this->clear(); // initialize to 0 the sum
 
-  std::cout << "Average over " << others.size() << " measurements" << std::endl;
+  //std::cout << "Average over " << others.size() << " measurements" << std::endl;
   unsigned int n=0;
   for(std::vector<TCTmeasurements>::const_iterator itr = others.begin();
       itr!=others.end();
@@ -96,3 +100,20 @@ TGraph *TCTmeasurements::GetWaveForm(unsigned int index, std::string graphName, 
   // std::cout << graphName << "\tBias = " << acquisition[index].GetBias()<< std::endl;	
   return acquisition[index].GetWaveForm(graphName, graphTitle);
 };
+
+TMultiGraph *TCTmeasurements::GetAllSpectra(std::string graphName, std::string graphTitle)const{ 
+  
+  if(graphName=="") graphName="validationTCT";
+  TMultiGraph *baselineGraphs = new TMultiGraph();
+  baselineGraphs->SetName(graphName.c_str());
+  baselineGraphs->SetTitle(graphTitle.c_str());
+  
+  for(unsigned int i=0; i<size(); i++){ // loop over all bias voltage
+      TGraph *gg = GetWaveForm(i,"",""); //
+      gg->SetLineColor(fPaletteColor[i]);
+      gg->SetLineStyle(1);
+      baselineGraphs->Add(gg, "l");
+    }
+	return baselineGraphs;
+      }
+    

@@ -33,7 +33,7 @@ all: ${LIBDIR}/TCTmeasurementBase.o ${LIBDIR}/TCTmeasurements.o ${LIBDIR}/TCTimp
 
 test: ${BUILDDIR}/test.exe 
 
-${BUILDDIR}/test.exe: ${BUILDDIR}/test.cpp ${INCLUDEDIR}/TCTimport.h ${LIBDIR}/TCTmeasurements.o ${LIBDIR}/configFileParser.o	
+${BUILDDIR}/test.exe: ${BUILDDIR}/test.cpp ${SRCDIR}/functions.cc ${INCLUDEDIR}/TCTimport.h ${LIBDIR}/TCTmeasurements.o ${LIBDIR}/configFileParser.o ${LIBDIR}/IVimport.o ${LIBDIR}/IVmeasurement.o ${LIBDIR}/CVimport.o ${LIBDIR}/CVmeasurement.o
 	@echo "-> Making test program"
 	@g++ ${OPT} -Wunused-value -Wunused-variable ${INCLUDE} ${LIB} -o ${BUILDDIR}/test.exe ${BUILDDIR}/test.cpp ${LIBDIR}/*.o
 
@@ -47,12 +47,24 @@ ${LIBDIR}/TCTspectrum.o: ${INCLUDEDIR}/TCTspectrum.h ${SRCDIR}/TCTspectrum.cc ${
 ${LIBDIR}/TCTimport.o: include/TCTimport.h ${INCLUDEDIR}/TCTmeasurement.h
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTimport.o include/TCTimport.h
 
-${LIBDIR}/TCTmeasurements.o: ${INCLUDEDIR}/TCTmeasurements.h ${LIBDIR}/TCTspectrum.o 
+${LIBDIR}/TCTmeasurements.o: ${INCLUDEDIR}/TCTmeasurements.h ${SRCDIR}/TCTmeasurements.cc ${LIBDIR}/TCTspectrum.o 
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTmeasurements.o ${SRCDIR}/TCTmeasurements.cc
 
 ${LIBDIR}/configFileParser.o: ${INCLUDEDIR}/configFileParser.h ${SRCDIR}/configFileParser.cc
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/configFileParser.o ${SRCDIR}/configFileParser.cc
 
+${LIBDIR}/IVmeasurement.o: ${INCLUDEDIR}/IVmeasurement.h ${SRCDIR}/IVmeasurement.cc
+	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/IVmeasurement.o ${SRCDIR}/IVmeasurement.cc
+
+${LIBDIR}/IVimport.o: ${INCLUDEDIR}/IVimport.h ${SRCDIR}/IVimport.cc ${INCLUDEDIR}/IVmeasurement.h
+	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/IVimport.o ${SRCDIR}/IVimport.cc
+
+
+${LIBDIR}/CVmeasurement.o: ${INCLUDEDIR}/CVmeasurement.h ${SRCDIR}/CVmeasurement.cc
+	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/CVmeasurement.o ${SRCDIR}/CVmeasurement.cc
+
+${LIBDIR}/CVimport.o: ${INCLUDEDIR}/CVimport.h ${SRCDIR}/CVimport.cc ${INCLUDEDIR}/CVmeasurement.h
+	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/CVimport.o ${SRCDIR}/CVimport.cc
 
 link: 
 	@./linkdef.sh

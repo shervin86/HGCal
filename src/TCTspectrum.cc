@@ -1,6 +1,7 @@
 #include <TCTspectrum.h>
 #include <iostream>
 #include <TString.h>
+#include <TAxis.h>
 float *TCTspectrum::GetTimes(void) const{
   float *x = new float[MAX_SAMPLES];
 
@@ -22,8 +23,8 @@ TGraph *TCTspectrum::GetWaveForm(std::string graphName, std::string graphTitle) 
     graphName=GetDiodeName()+GetTime()+"_"; 
     char st[10];
     if(GetBias()>0)
-      sprintf(st, "p%.1f", GetBias());
-    else sprintf(st, "m%.1f", GetBias());
+      sprintf(st, "p%.0f", fabs(GetBias()));
+    else sprintf(st, "m%.0f", fabs(GetBias()));
     graphName+=st;
   }
   
@@ -52,6 +53,11 @@ TGraph *TCTspectrum::GetWaveForm(std::string graphName, std::string graphTitle) 
   graph->SetTitle(graphTitle.c_str());
   graph->SetMarkerStyle(20);
   graph->SetMarkerSize(1.);
+  graph->SetFillColor(0);
+  graph->Draw("A");
+  graph->GetXaxis()->SetTitle("time [s]");
+  graph->GetYaxis()->SetTitle("Signal [V]");
+
   return graph;
 }
 

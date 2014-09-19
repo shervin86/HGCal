@@ -18,6 +18,7 @@ void configFileParser::Import(void){
     
     configFileContent configLine;
     configLine << f_in ;
+
     lines.insert(std::pair<std::string, configFileContent>(configLine.type, configLine));
   }
 }

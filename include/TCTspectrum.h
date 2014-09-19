@@ -14,10 +14,15 @@
 
 class TCTspectrum: public TCTspectrumBase{
  public:
- TCTspectrum(TCTspectrumBase base): TCTspectrumBase(base){};
+ TCTspectrum(TCTspectrumBase base): TCTspectrumBase(base), _noisy(false){};
   
- TCTspectrum(std::string diodeName): TCTspectrumBase(diodeName){
-  };
+ TCTspectrum(std::string diodeName): TCTspectrumBase(diodeName), _noisy(false){};
+
+  //
+  inline bool isnull(){ return empty();};
+  inline bool null(){   return empty();};
+
+  inline void SetNoisy(){ _noisy=true;};
 
   //  TCTspectrum& operator* (const TCTspectrum& lhs, const TCTspectrum& rhs){
   TCTspectrum operator- (const TCTspectrum& rhs) const{
@@ -77,6 +82,17 @@ class TCTspectrum: public TCTspectrumBase{
     return newSpectrum;
   };
   
+  TCTspectrum& operator-= (double value){
+    //TCTspectrum newSpectrum(*this);
+    const TCTspectrum& lhs = *this;
+    unsigned int nSamples=lhs.GetN();
+    
+    const float *samples_lhs = lhs.GetSamples();
+    for(unsigned int i=0; i < nSamples; i++){
+      GetSamples()[i]=samples_lhs[i]-value;
+    }
+    return *this;
+  };
 
   /// \todo fixit, assert should work
   TCTspectrum& operator -= (const TCTspectrum& other){
@@ -91,6 +107,7 @@ class TCTspectrum: public TCTspectrumBase{
       return *this;
     }else return *this;
   };
+
 
   TCTspectrum& operator += (const TCTspectrum& other){
     unsigned int nSamples=GetN();
@@ -122,6 +139,52 @@ class TCTspectrum: public TCTspectrumBase{
     return *this;
   };
 
+  float GetMean(float start, float end) const{
+    unsigned int nSamples=GetN(), jSamples=0;
+    float mean=0;
+    //assert(nSamples == other.GetN() && GetTimeScanUnit() == 1);// other.GetTimeScanUnit());
+    //const float *samples = other.GetSamples();
+    float t=start;
+    float dt=GetTimeScanUnit();
+    
+    for(unsigned int i=(unsigned int) (start/dt); i < nSamples && t<end; i++, t+=dt){
+      mean+=GetSamples()[i];
+      jSamples++;
+    }
+    mean/=jSamples;
+    return mean;
+  }
+
+  unsigned int GetNsamples(float start, float end) const{
+    unsigned int nSamples=GetN(), jSamples=0;
+    float t=start;
+    float dt=GetTimeScanUnit();
+    
+    for(unsigned int i=(unsigned int) (start/dt); i < nSamples && t<end; i++, t+=dt){
+      jSamples++;
+    }
+    return jSamples;
+  }
+    
+  float GetRMS(float start, float end) const{
+    unsigned int nSamples=GetN();
+    float sum=0., sum2=0.;
+    //assert(nSamples == other.GetN() && GetTimeScanUnit() == 1);// other.GetTimeScanUnit());
+    //const float *samples = other.GetSamples();
+    float dt=GetTimeScanUnit();
+    float t=0.;
+    unsigned int jSamples=0;
+    for(unsigned int i=(unsigned int)(start/dt); i < nSamples && t<end; i++, t+=dt){
+      float v=GetSamples()[i];
+      jSamples++;
+      sum+=v;
+      sum2+=v*v;
+    }
+    float mean= sum/jSamples;
+    return sqrt(sum2/jSamples -mean*mean);
+  }
+
+    
   void clear(void){
     *this = 0;
   };
@@ -130,6 +193,10 @@ class TCTspectrum: public TCTspectrumBase{
   float *GetTimes(void)const;
 
   float GetWaveIntegral(float min, float max) const{
+    if(GetN()<=0){
+      std::cerr << "[ERROR] No points for this spectrum: " << GetDiodeName() << "\t" << GetBias() << std::endl;
+      assert(GetN()>0);
+    }
     assert(min<max);
     assert(min<_timeScanUnit*GetN());
     
@@ -144,8 +211,10 @@ class TCTspectrum: public TCTspectrumBase{
       //std::cout << "integral = " << integral << "\t" << i << "\t" << _samples[i] << std::endl;
       integral += _samples[i];
     }
-    return integral;
+    return integral*_timeScanUnit;
   };
+ private:
+  bool _noisy;
   
 };
 

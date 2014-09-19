@@ -97,7 +97,8 @@ class TCTspectrumBase{
   inline unsigned int GetN(void)     const{ return _nSamples;    };
   inline float* GetSamples(void)     { return _samples;     };
   inline const float* GetSamples(void)     const{ return _samples;     };
-  
+  inline bool empty(void) const { return (_nSamples==0);};
+
  protected:
   std::string _diodeName;       ///< code of the diode
   std::string _time;            ///< date of acquisition
