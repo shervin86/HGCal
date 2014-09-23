@@ -11,6 +11,7 @@
 #include "TCTspectrumBase.h"
 #include <cmath>
 #include <TGraph.h>
+#include <map>
 
 class TCTspectrum: public TCTspectrumBase{
  public:
@@ -192,7 +193,7 @@ class TCTspectrum: public TCTspectrumBase{
   TGraph *GetWaveForm(std::string graphName="Graph", std::string graphTitle="graph") const;
   float *GetTimes(void)const;
 
-  float GetWaveIntegral(float min, float max) const{
+  float GetWaveIntegral(float min, float max, float baselineMean=0.) const{
     if(GetN()<=0){
       std::cerr << "[ERROR] No points for this spectrum: " << GetDiodeName() << "\t" << GetBias() << std::endl;
       assert(GetN()>0);
@@ -209,7 +210,7 @@ class TCTspectrum: public TCTspectrumBase{
     
     for(unsigned int i=(unsigned int)(min/_timeScanUnit); i < binMax; i++){
       //std::cout << "integral = " << integral << "\t" << i << "\t" << _samples[i] << std::endl;
-      integral += _samples[i];
+      integral += _samples[i]-baselineMean;
     }
     return integral*_timeScanUnit;
   };
@@ -218,7 +219,9 @@ class TCTspectrum: public TCTspectrumBase{
   
 };
 
-typedef std::vector<TCTspectrum> TCTspectrumCollection_t;
+//typedef std::vector<TCTspectrum> TCTspectrumCollection_t;
+/// spectra ordered by bias voltage
+typedef std::map< float, TCTspectrum > TCTspectrumCollection_t;
 
 
 #endif

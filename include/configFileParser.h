@@ -50,6 +50,7 @@ class configFileContent{
   inline std::string GetReference(void)const{ return TCTreference;};
   inline std::string GetBaseline(void)const{ return TCTbaseline;};
   inline float GetTemperature(void)const{ return std::stof(temp);};
+  inline std::string GetTemperatureString(void)const{ return temp;};
 
   configFileContent& operator<<(std::ostream& f){
     f << type << "\t" << diodeName << "\t" << irradiation << "\t" << GetThickness() << "\t" << GetTemperature()
@@ -164,16 +165,42 @@ class configFileParser{
     return iter->second.type;
   }
 
-  inline std::string GetFluence(std::string type) const { return find(type)->second.irradiation;};
+  inline std::string GetFluence(std::string type) const { return GetFluence(find(type));};
+  inline std::string GetFluence(lines_t::const_iterator iter) const{ return iter->second.irradiation;};
   inline std::string GetThickness(std::string type) const{ 
-    std::string thickness= find(type)->second.diodeName.substr(2,3);
+    std::string thickness= GetThickness(find(type));
     return thickness;
   }
- 
+  inline std::string GetThickness(lines_t::const_iterator iter) const{ 
+    std::string thickness= iter->second.diodeName.substr(2,3);
+    return thickness;
+  }
+
+
+  inline float GetTemperature(lines_t::const_iterator iter)const{
+    return iter->second.GetTemperature();
+  }
+
   inline float GetTemperature(unsigned int index) const{ 
     auto iter = lines.begin();
     std::advance(iter,index);
-    return iter->second.GetTemperature();
+    return GetTemperature(iter);
+  }
+  
+  inline std::string GetTemperatureString(lines_t::const_iterator iter)const{
+    return iter->second.GetTemperatureString();
+  }
+
+  inline std::string GetLegend(std::string type) const{
+    auto iter = find(type);
+
+    std::string legend;
+    legend+=GetThickness(iter);
+    legend+=", ";
+    legend+=GetFluence(iter);
+    legend+=", ";
+     legend+=GetTemperatureString(iter);
+    return legend;
   }
 
   inline bool check(std::string type){

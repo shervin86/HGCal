@@ -68,7 +68,7 @@ typedef std::map<std::string, CVmeasurement> CVMap_t;
 
 
 
-void PlotQvsV(measMap_t& referencesMap, float startSignal, float endSignal=1.00e-7){
+void PlotQvsV(measMap_t& referencesMap, float startSignal, float endSignal){
   //--------------- plots of QvsV for references
   for(measMap_t::iterator m_itr=referencesMap.begin();
       m_itr!=referencesMap.end();
@@ -102,7 +102,39 @@ void PlotQvsV(measMap_t& referencesMap, float startSignal, float endSignal=1.00e
   }
 }
 
-void PlotCCEvsV(measMap_t& referencesMap, float startSignal, float endSignal=1.00e-7){
+
+void PlotQvsV(measurementMap_t& referencesMap, float startSignal, float endSignal){
+  //--------------- plots of QvsV for references
+  for(measurementMap_t::iterator m_itr=referencesMap.begin();
+      m_itr!=referencesMap.end();
+      m_itr++){
+
+    TMultiGraph baselineGraphs;
+    baselineGraphs.SetName((m_itr->first+"_QvsV").c_str());
+    baselineGraphs.SetTitle("QvsV");
+    
+    TCTmeasurements *v_itr = &m_itr->second;
+    TGraph *gg = v_itr->GetQvsV(startSignal,endSignal); //
+    
+    //TGraph *gg = v_itr->GetQvsV(1.00e-7,1.10e-7); //
+    //gg->SetLineColor(fPaletteColor[i]);
+    gg->SetLineStyle(1);
+    gg->SetMarkerStyle(20);
+    gg->Draw("A");
+    gg->GetXaxis()->SetTitle("U [V]");
+    gg->GetYaxis()->SetTitle("Q [A s]");
+    baselineGraphs.Add(gg, "p");
+    //}
+  
+    baselineGraphs.Draw("A");
+    baselineGraphs.GetXaxis()->SetTitle("U [V]");
+    baselineGraphs.GetYaxis()->SetTitle("Q [C]");
+
+    baselineGraphs.Write();
+  }
+}
+
+void PlotCCEvsV(measMap_t& referencesMap, float startSignal, float endSignal){
   //--------------- plots of CCEvsV for references
   for(measMap_t::iterator m_itr=referencesMap.begin();
       m_itr!=referencesMap.end();
@@ -137,7 +169,36 @@ void PlotCCEvsV(measMap_t& referencesMap, float startSignal, float endSignal=1.0
 }
 
 
-void DumpCCE(configFileParser& parser, measMap_t& referencesMap, float bias, float startSignal, float endSignal=1.00e-7){
+void PlotCCEvsV(measurementMap_t& referencesMap, float startSignal, float endSignal){
+  //--------------- plots of CCEvsV for references
+  for(measurementMap_t::iterator m_itr=referencesMap.begin();
+      m_itr!=referencesMap.end();
+      m_itr++){
+
+    TMultiGraph baselineGraphs;
+    baselineGraphs.SetName((m_itr->first+"_CCEvsV").c_str());
+    baselineGraphs.SetTitle("CCEvsV");
+    TCTmeasurements *v_itr = &m_itr->second;
+    TGraph *gg = v_itr->GetCCEvsV(startSignal,endSignal); //
+	
+	//TGraph *gg = v_itr->GetQvsV(1.00e-7,1.10e-7); //
+	//gg->SetLineColor(fPaletteColor[i]);
+	gg->SetLineStyle(1);
+	gg->SetMarkerStyle(20);
+	gg->Draw("A");
+	gg->GetXaxis()->SetTitle("U [V]");
+	gg->GetYaxis()->SetTitle("CCE");
+	baselineGraphs.Add(gg, "p");
+
+    baselineGraphs.Draw("A");
+    baselineGraphs.GetXaxis()->SetTitle("U [V]");
+    baselineGraphs.GetYaxis()->SetTitle("CCE");
+
+    baselineGraphs.Write();
+  }
+}
+
+void DumpCCE(configFileParser& parser, measMap_t& referencesMap, float bias, float startSignal, float endSignal){
   //--------------- plots of CCEvsV for references
   for(measMap_t::iterator m_itr=referencesMap.begin();
       m_itr!=referencesMap.end();
@@ -154,22 +215,6 @@ void DumpCCE(configFileParser& parser, measMap_t& referencesMap, float bias, flo
   }
 }
 
-void SetReferences(measMap_t& irradiatedsMap, measurementMap_t& referenceMap, configFileParser& parser){
-
-  for(measMap_t::iterator m_itr=irradiatedsMap.begin();
-      m_itr!=irradiatedsMap.end();
-      m_itr++){
-
-    for(TCTmeasurementsCollection_t::iterator v_itr=m_itr->second.begin(); // loop over references of the same type
-    	v_itr!=m_itr->second.end();
-    	v_itr++){
-      std::string basName = parser.find(m_itr->first)->second.GetReference();
-      assert(referenceMap.count(basName)!=0);
-      const TCTmeasurements& ref = referenceMap[basName];
-      v_itr->SetReference(ref);
-    }
-  }
-}
 
 
 void SetBaselines(measMap_t& irradiatedsMap, measurementMap_t& referenceMap, configFileParser& parser){
@@ -205,7 +250,7 @@ void BaselineNoiseContribution(TCTmeasurements& baseline, float startSignal, flo
  
 int main(int argc, char **argv){
 
-  Int_t FI = TColor::CreateGradientColorTable(5, stop, r, g, b, 100);
+  //  Int_t FI = TColor::CreateGradientColorTable(5, stop, r, g, b, 100);
   //  for (int i=0;i<100;i++) fPaletteColor[i] = FI+i;
 
   //using namespace boost;
@@ -214,7 +259,7 @@ int main(int argc, char **argv){
 
   //------------------------------ setting option categories
   po::options_description desc("Main options");
-  float startSignal=0.85e-7, endSignal=1.00e-7;
+
   
   po::options_description outputOption("Output options");
   std::string imgFormat, outDir;
@@ -222,7 +267,8 @@ int main(int argc, char **argv){
 
   po::options_description inputOption("Input options");
   std::string baseDir, configFilename, tctFilename, ivFilename, cvFilename;
-  std::vector< std::string > tctBaselines, tctReferences;
+  std::string tctType;
+  std::vector< std::string > tctBaselineFiles, tctReferenceFiles;
    //po::options_description cmd_line_options;
   //cmd_line_options.add(desc).add(fitOption).add(smearOption);
 
@@ -237,16 +283,18 @@ int main(int argc, char **argv){
   inputOption.add_options()
     ("baseDir,d", po::value< std::string >(&baseDir)->default_value("data/shervin"), "directory with data files")
     ("configFile,f", po::value< std::string >(&configFilename), "File with list of measurements")
+    ("tctType, t", po::value<std::string >(&tctType), "Index in the config file")
     ("tctFile", po::value< std::string >(&tctFilename), "single tct file") // for single validation
-    //    ("tctBaseline", po::value< std::vector<std::string> >(&tctBaselines), "tct measurement uses ad baseline, can be called multiple times") 
+    ("tctBaseline", po::value< std::vector<std::string> >(&tctBaselineFiles), "tct measurement uses ad baseline, can be called multiple times") 
+    ("tctReference", po::value< std::vector<std::string> >(&tctReferenceFiles), "tct measurement uses ad baseline, can be called multiple times") 
     ("ivFile", po::value< std::string >(&ivFilename), "single iv file") // for single validation
     ("cvFile", po::value< std::string >(&cvFilename), "single cv file") // for single validation
     ;
   outputOption.add_options()
     ("outDir", po::value<std::string>(&outDir),"")
     ("imgFormat", po::value<std::string>(&imgFormat)->default_value("eps"),"")
-    ("timemMin", po::value<float>(&timeMin)->default_value(0.085e-6),"")
-    ("timemMax", po::value<float>(&timeMax)->default_value(0.116e-6),"")
+    ("timeMin", po::value<float>(&timeMin)->default_value(0.085e-6),"")
+    ("timeMax", po::value<float>(&timeMax)->default_value(0.100e-6),"")
     //("outFile", po::value<std::string>(&outFile),"");
     ;
   
@@ -272,10 +320,51 @@ int main(int argc, char **argv){
     exit(1);
   }
 
-  
+  //  float startSignal=timeMin, endSignal=timeMax;
   // if a TCT file is given as input, this means fast validation of the measurement and exit
+  TCTmeasurementsCollection_t baselines;
+  TCTmeasurements baseline;
+  TCTmeasurements reference;
+  TCTmeasurements tct;
+
+
+  //------------------------------ parsing the config file
+  // all the information is stored in parser
+  configFileParser parser(configFilename);
+
+
+  if(vm.count("tctBaseline")){
+    for(std::vector<std::string>::const_iterator itr=tctBaselineFiles.begin();
+	itr!=tctBaselineFiles.end();
+	itr++){
+      std::cout << "[STATUS] Reading TCT baseline file: ";
+      std::cout << *itr << std::endl;
+      baselines.push_back(TCTmeasurements(*itr,-999));
+      
+    }
+  }
+
+    // check the compatiblity between baseline measurements
+  if(baselines.size()>0)
+    //make the average of the baselines
+    baseline.Average(baselines);
+
+  if(vm.count("tctReference")){
+    if(vm.count("tctReference")>1){
+      std::cerr << "[ERROR] Multiple tctReference measurement defined, but not yet implemented" << std::endl;
+      return 1;
+    }
+    reference=TCTmeasurements(tctReferenceFiles[0],-999);
+  }
+
+  //  reference-=baseline.GetAverageMeasurement();
+  
+
   if(vm.count("tctFile")){
-    TCTmeasurements tct(tctFilename, -999);
+    tct=TCTmeasurements(tctFilename, -999);
+    tct-=baseline.GetAverageMeasurement();
+    tct.SetReference(reference);
+    
     tct.SetPaletteColor(fPaletteColor, 50);
     TMultiGraph *g = tct.GetAllSpectra("tctValidation", "");
     g->SaveAs("tmp/tctValidation/tctValidation.root");
@@ -283,8 +372,22 @@ int main(int argc, char **argv){
     g->Draw("A");
     g->GetXaxis()->SetRangeUser(timeMin, timeMax);
     c.SaveAs(("tmp/tctValidation/tctValidation."+imgFormat).c_str());
+
+    TGraph *QvsV = tct.GetQvsV(timeMin, timeMax);
+    TGraph *QvsVref = reference.GetQvsV(timeMin, timeMax);
+    QvsVref->SaveAs("QvsVref.root");
+    TMultiGraph multi;
+    QvsV->SetMarkerStyle(22);
+    multi.Add(QvsV,"p");
+    multi.Add(QvsVref, "p");
+    multi.Draw("A");
+    multi.SaveAs("tmp/tctValidation/QvsV.root");
+    return 0;
+    TGraph *CCEvsV = tct.GetCCEvsV(timeMin, timeMax);
+    CCEvsV->SaveAs("tmp/tctValidation/CCEvsV.root");
     return 0; 
   }
+
 
   if(vm.count("ivFile")){
     IVimport ivimporter;
@@ -315,18 +418,16 @@ int main(int argc, char **argv){
     return 0;
   }
 
-  //------------------------------ parsing the config file
-  // all the information is stored in parser
-  configFileParser parser(configFilename);
-
-
-
+  // all the measurements in the config file
   measMap_t baselinesMap, referencesMap, irradiatedsMap;
+  
+  // averaged measurements of the same type
+  measurementMap_t baselineMap, referenceMap, irradiatedMap;  
 
-  measurementMap_t baselineMap, referenceMap;  
   IVMap_t ivMap;
   CVMap_t cvMap;
 
+  // import all the measurements indicated in the config file
   IVimport ivimporter;  
   CVimport cvimporter;
   for(unsigned int i=0; i < parser.size(); i++){
@@ -444,40 +545,42 @@ int main(int argc, char **argv){
   // now you have all the measurements as vectors
   }
 
+
+  std::cout << "[INFO] Spectrum integration range: " << timeMin << " - " << timeMax << std::endl;
  
   TFile outFile("outFile.root","RECREATE");
   outFile.cd();
 
+  // make the average over measurements of the same type
   float RMS=0.;
   for(measMap_t::iterator m_itr=baselinesMap.begin();  // loop over different baselines
       m_itr!=baselinesMap.end();
       m_itr++){
-      for(TCTmeasurementsCollection_t::iterator v_itr=m_itr->second.begin(); // loop over measurements of the same type
+    for(TCTmeasurementsCollection_t::iterator v_itr=m_itr->second.begin(); // loop over measurements of the same type
 	v_itr!=m_itr->second.end();
 	v_itr++){
-	
-	v_itr->SetPaletteColor(fPaletteColor, 50);
-      }
+      
+      v_itr->SetPaletteColor(fPaletteColor, 50);
+    }
     baselineMap[m_itr->first]=TCTmeasurements(); // declare the new baseline (will be the average)
-    baselineMap[m_itr->first].Average(m_itr->second); // assign the average over all the measurements of the same type
+    baselineMap[m_itr->first].Average(m_itr->second,false); // assign the average over all the measurements of the same type
   }
 
   // procedure to check the compatiblity of the baselines
-  if(vm.count("checkBaselines")){
-    std::cout << "------------------------------\n"; 
-    std::cout << "[STATUS] " << "Checking baselines compatibility" << std::endl;
-    // for every baseline type make the average of all the measurements
-    float timeScanUnit=baselineMap.begin()->second.GetSpectrum(0).GetTimeScanUnit();
-    if(checkCompatiblity(baselinesMap, "checkBaselines", RMS)) 
-      std::cout << "[INFO] Baselines compatiblity... [OK]" << std::endl;
-
-    std::cout << "------------------------------\n";
-    std::cout << "[STATUS] "<< "plot individual measurements" << std::endl;
-
+  std::cout << "------------------------------\n"; 
+  std::cout << "[STATUS] " << "Checking baselines compatibility" << std::endl;
+  // for every baseline type make the average of all the measurements
+  
+  if(checkCompatiblity(baselinesMap, "checkBaselines", RMS)) 
+    std::cout << "[INFO] Baselines compatiblity... [OK]" << std::endl;
+  
+  std::cout << "------------------------------\n";
+  std::cout << "[STATUS] "<< "plot individual measurements" << std::endl;
+  
   //--------------- plot baseline averages
   // plot individual measurements and the average to check correctness of the average
   // plot also the difference between the averages
- 
+  
   for(measMap_t::const_iterator type_itr=baselinesMap.begin();  // loop over different baseline types
       type_itr!=baselinesMap.end();
       type_itr++){
@@ -497,7 +600,7 @@ int main(int argc, char **argv){
 	baselineGraphs.Add(gg, "p");
       }
     }
-
+    
     TGraphErrors *gg = baselineMap[typeName].GetAverageWaveForm(typeName,"average");
     gg->SetLineColor(kBlue);
     gg->SetFillColor(kAzure-4);
@@ -512,9 +615,7 @@ int main(int argc, char **argv){
     // TGraphErrors *gDiff= baselineDiff.GetAverageWaveForm(typeName+"_diff", "average diff");
     // gDiff->SaveAs("gDiff.root");
   }  
-  }
-
- 
+  
   if(vm.count("onlyBaselines")) return 0;
 
 
@@ -530,7 +631,7 @@ int main(int argc, char **argv){
       type_itr++){
     TMultiGraph baselineGraphs;
     baselineGraphs.SetName((type_itr->first+"_spectra_baseline").c_str());
-    baselineGraphs.SetTitle((type_itr->first+"_spectra_baseline").c_str());
+    baselineGraphs.SetTitle(parser.GetLegend((type_itr->first)).c_str());
     for(TCTmeasurementsCollection_t::const_iterator v_itr=type_itr->second.begin(); // loop over references of the same type
     	v_itr!=type_itr->second.end();
     	v_itr++){
@@ -550,7 +651,7 @@ int main(int argc, char **argv){
     baselineGraphs.Draw("A");
     baselineGraphs.GetXaxis()->SetTitle("time [s]");
     baselineGraphs.GetYaxis()->SetTitle("Signal [V]");
-    baselineGraphs.GetXaxis()->SetRangeUser(startSignal,startSignal+3e-8);
+    baselineGraphs.GetXaxis()->SetRangeUser(timeMin,timeMin+3e-8);
     baselineGraphs.Write();
   }    
 
@@ -600,7 +701,7 @@ int main(int argc, char **argv){
     baselineGraphs.Draw("A");
     baselineGraphs.GetXaxis()->SetTitle("time [s]");
     baselineGraphs.GetYaxis()->SetTitle("Signal [V]");
-    baselineGraphs.GetXaxis()->SetRangeUser(startSignal,startSignal+3e-8);
+    baselineGraphs.GetXaxis()->SetRangeUser(timeMin,timeMin+3e-8);
     baselineGraphs.Write();
   
   }
@@ -608,7 +709,7 @@ int main(int argc, char **argv){
   
   //  checkCompatiblity(referencesMap, "checkReferences", RMS);
 
-  if(!checkMeasurementBaseline(RMS, startSignal, referencesMap, "checkReferencesBaseline")){
+  if(!checkMeasurementBaseline(RMS, timeMin, referencesMap, "checkReferencesBaseline")){
     std::cerr << "[WARNING] check association of references and baselines" << std::endl;
     //return 1;
   }
@@ -620,9 +721,9 @@ int main(int argc, char **argv){
   for(measMap_t::const_iterator m_itr=referencesMap.begin();  // loop over different measurements
       m_itr!=referencesMap.end();
       m_itr++){
-    //referenceMap[m_itr->first]=TCTmeasurements(); // declare the new reference (will be the average)
-    //referenceMap[m_itr->first].Average(m_itr->second); // assign the average over all the measurements of the same type
-    referenceMap[m_itr->first]=m_itr->second[0]; // take the first one for the moment 
+    referenceMap[m_itr->first]=TCTmeasurements(); // declare the new reference (will be the average)
+    referenceMap[m_itr->first].Average(m_itr->second, true); // assign the average over all the measurements of the same type
+    //referenceMap[m_itr->first]=m_itr->second[0]; // take the first one for the moment 
   }
 
 
@@ -633,8 +734,7 @@ int main(int argc, char **argv){
     
     TMultiGraph baselineGraphs;
     baselineGraphs.SetName((m_itr->first+"_spectra").c_str());
-    baselineGraphs.SetTitle(m_itr->first.c_str());
-   
+    baselineGraphs.SetTitle(parser.GetLegend((m_itr->first)).c_str());
     for(TCTmeasurementsCollection_t::iterator v_itr=m_itr->second.begin(); // loop over references of the same type
     	v_itr!=m_itr->second.end();
     	v_itr++){
@@ -659,29 +759,38 @@ int main(int argc, char **argv){
   
   }
 
-
-  if(!checkMeasurementBaseline(RMS, startSignal, irradiatedsMap, "checkIrradiatesBaseline")){
-    //   std::cerr << "[WARNING] check association of irradiated diodes and baselines" << std::endl;
+  if(!checkMeasurementBaseline(RMS, timeMin, irradiatedsMap, "checkIrradiatesBaseline")){
+    std::cerr << "[WARNING] check association of irradiated diodes and baselines" << std::endl;
     //return 1;
   }
- 
- // if(!checkMeasurementBaseline(RMS, startSignal, irradiatedsMap, "checkIrradiatesBaseline")){
+
+  // for every irradiate type make the average of all the measurements
+  for(measMap_t::const_iterator m_itr=irradiatedsMap.begin();  // loop over different measurements
+      m_itr!=irradiatedsMap.end();
+      m_itr++){
+    irradiatedMap[m_itr->first]=TCTmeasurements(); // declare the new irradiate (will be the average)
+    irradiatedMap[m_itr->first].Average(m_itr->second,true); // assign the average over all the measurements of the same type
+    //irradiateMap[m_itr->first]=m_itr->second[0]; // take the first one for the moment 
+  }
+
+ // if(!checkMeasurementBaseline(RMS, timeMin, irradiatedsMap, "checkIrradiatesBaseline")){
  //   std::cerr << "[WARNING] check association of irradiated diodes and baselines" << std::endl;
  //   return 1;
  //  }
 
-  std::cout << startSignal << "\t" << endSignal << "\t" <<
-    irradiatedsMap.begin()->second[0].GetSpectrum(0).GetTimeScanUnit() << "\t" << irradiatedsMap.begin()->second[0].GetSpectrum(0).GetNsamples(startSignal, endSignal) << std::endl;
-  PlotQvsV(referencesMap, startSignal);
+  std::cout << timeMin << "\t" << timeMax << "\t" <<
+    irradiatedsMap.begin()->second[0].GetSpectrum(0).GetTimeScanUnit() << "\t" << irradiatedsMap.begin()->second[0].GetSpectrum(0).GetNsamples(timeMin, timeMax) << std::endl;
+  PlotQvsV(referenceMap, timeMin,timeMax);
   //  return 0;
-  PlotQvsV(irradiatedsMap, startSignal);
+  PlotQvsV(irradiatedMap, timeMin,timeMax);
   //return 0;
-  SetReferences(irradiatedsMap, referenceMap, parser);
-  PlotCCEvsV(irradiatedsMap, startSignal);
+  //SetReferences(irradiatedsMap, referenceMap, parser);
+  SetReferences(irradiatedMap, referenceMap, parser);
+  PlotCCEvsV(irradiatedMap, timeMin,timeMax);
   std::cout << "------------------------------CCE at 700 V" << std::endl;
-  DumpCCE(parser, irradiatedsMap, 700, startSignal);
+  DumpCCE(parser, irradiatedsMap, 700, timeMin, timeMax);
   std::cout << "------------------------------CCE at 1000 V" << std::endl;
-  DumpCCE(parser, irradiatedsMap, 1000, startSignal);
+  DumpCCE(parser, irradiatedsMap, 1000, timeMin,timeMax);
 
   parser.Dump();
 

@@ -18,23 +18,12 @@
 /** \class TCTmeasurements TCTmeasurements.h include/TCTmeasurements.h
  */
 class TCTmeasurements{
-  typedef   std::multimap<float, unsigned int> biasMap_t;
-
-  int fPaletteColor[MAX_ACQ];
-  biasMap_t acqAbsBiasIndex;
  public:
-
-  /// constructor for new measurement produced by manipulation of other measurements
- TCTmeasurements():
-  fPaletteColor({0}),
-  _checkBias(false), _reference(NULL){};
-
-  /* TCTmeasurements(std::string filename, TCTspectrum reference, TCTspectrum baseline){ */
-  /*   acquisition = importer.ImportFromFile(filename); */
-  /* } */
-
+  typedef std::multimap<float, unsigned int> biasMap_t;
+  
+  // default constructor
  TCTmeasurements(std::string filename, float temp): 
-  _checkBias(false),
+  //  _checkBias(false),
     _reference(NULL){
     acquisition = importer.ImportFromFile(filename);
  
@@ -45,13 +34,33 @@ class TCTmeasurements{
     }
   }
 
+
+  /// constructor for new measurement produced by manipulation of other measurements
+ TCTmeasurements(void): 
+    fPaletteColor({1}), //_checkBias(false), 
+      _reference(NULL){
+    return;
+  };
+
+
   ~TCTmeasurements(){};
 
-  /// put the average into acquisition[0] and the std. dev. into acquisition[1]
-  void Average(std::vector<TCTmeasurements> others, bool checkBias=false); ///< average over several measurements
+  typedef TCTspectrumCollection_t::const_iterator  TCTmeasurements::const_iterator;
+  typedef TCTspectrumCollection_t::iterator  TCTmeasurements::iterator;
+  TCTmeasurements::const_iterator begin(){return acquisition.begin();};
+  TCTmeasurements::iterator       begin(){return acquisition.begin();};
+  size_t size(void) const{ return acquisition.size();}; ///< number of spectra acquired with this measurement (if from acquisition)
+
+  /** put the average into acquisition[0] and the std. dev. into acquisitionRMS[0]\n
+   * if checkBias==true, make the average only between measurements with the same bias voltage\n
+   * if checkBias==false, make the average over all the bias voltages
+   */
+  void Average(std::vector<TCTmeasurements> others, bool checkBias=false); ///< this measurement will contain the average over several TCTmeasurements
+
   TGraph *GetWaveForm(unsigned int index, std::string graphName, std::string graphTitle)const;
   TMultiGraph *GetAllSpectra(std::string graphName, std::string graphTitle)const; ///< plot all the spectra 
   TGraphErrors *GetAverageWaveForm(std::string graphName, std::string graphTitle) const; ///< Graph with average of the spectra, error=std.dev.
+
   void SetPaletteColor(int *palette, unsigned int size){
     assert(size>0);
     if(size>MAX_ACQ){
@@ -67,35 +76,31 @@ class TCTmeasurements{
     }
   }
 
-  size_t size(void) const{ return acquisition.size();}; ///< number of spectra acquired with this measurement (if from acquisition)
-
-  
-
-  /* // subtraction of waveforms from other acquisition (mainly for baseline subtraction) */
-  /* TCTmeasurements& operator-=(const TCTmeasurements& other){ */
-  /*   unsigned int size=acquisition.size(); */
-  /*   for(unsigned int i=0; i < size; i++){ */
-  /*     acquisition[i]-=other.acquisition[i]; */
-  /*   } */
-  /*   return *this; */
-  /* }; */
 
   /// Return the average spectrum
   TCTspectrum& GetAverageMeasurement(){
+    auto iter = acquisition.begin();
     assert(_isAverage);
-    return acquisition[0];
+    return *iter;
   }
 
   /// return one spectrum
   TCTspectrum& GetSpectrum(unsigned int i){
+
     assert(i<acquisition.size());
-    return acquisition[i];
+    auto iter = acquisition.begin();
+    std::advance(iter,i);
+
+    return *iter;
   }
 
   /// return one spectrum
   const TCTspectrum& GetSpectrum(unsigned int i) const{
     assert(i<acquisition.size());
-    return acquisition[i];
+    auto iter = acquisition.begin();
+    std::advance(iter,i);
+
+    return *iter;
   }
 
 
@@ -107,8 +112,12 @@ class TCTmeasurements{
     }  else {
       it = ++(acqAbsBiasIndex.lower_bound(bias));
     }
-    
-    return acquisition[it->second];
+    if(it!=acqAbsBiasIndex.end()){
+      return acquisition[it->second];
+    }
+    else{
+      return  *(new TCTspectrum(acquisition[0].GetDiodeName()));
+    }
   }
 
 
@@ -121,11 +130,11 @@ class TCTmeasurements{
     }  else {
       it = ++(acqAbsBiasIndex.lower_bound(bias));
     }
-    
+    assert(it!=acqAbsBiasIndex.end());
     return acquisition[it->second];
   }
 
-  unsigned int GetSpectrumIndexWithAbsBias(float bias) const{
+  int GetSpectrumIndexWithAbsBias(float bias) const{
     biasMap_t::const_iterator it = acqAbsBiasIndex.begin(); 
     //std::cout << bias << "\t" << it->first << "\t" << it->second << std::endl;
     if(fabs(it->first -0) < 1e-3){ // if compatible with 0, this means that the order is -1000, -700, 0;
@@ -133,9 +142,11 @@ class TCTmeasurements{
     }  else {
       it = ++(acqAbsBiasIndex.lower_bound(bias));
     }
-    
-    return it->second;
+    if(it!=acqAbsBiasIndex.end())
+      return it->second;
+    else return size();
   }    
+
       
   /// return the spectrum with given bias voltage (absolute value), or empty spectrum
   const TCTspectrum& operator[](float bias) const{
@@ -151,6 +162,15 @@ class TCTmeasurements{
     return GetSpectrum(index);
   }
 
+  TCTmeasurements& operator=(const TCTmeasurements& other){
+    reset();
+    acquisition=other.acquisition;
+    acquisitionRMS=other.acquisition;
+    acqAbsBiasIndex=other.acqAbsBiasIndex;
+    //std::cout << acqAbsBiasIndex.begin()->first << "\t" << acqAbsBiasIndex.begin()->second << std::endl;
+    return *this;
+  };
+  
   TCTmeasurements& operator-=(const TCTspectrum& other){
     unsigned int size=acquisition.size();
     for(unsigned int i=0; i < size; i++){
@@ -168,10 +188,10 @@ class TCTmeasurements{
     
     unsigned int size=acquisition.size();
     for(unsigned int i=0; i < size; i++){
-      Q[i] = acquisition[i].GetWaveIntegral(min, max);
+      Q[i] = acquisition[i].GetWaveIntegral(min, max,acquisition[i].GetMean(0.,min));
       V[i] = abs(acquisition[i].GetBias());
     }
-    return new TGraph(size-1, V,Q);  /// \todo check why size-1
+    return new TGraph(size, V,Q);  /// \todo check why size-1
   }
 
   TGraph *GetCCEvsV(float min, float max){
@@ -189,9 +209,20 @@ class TCTmeasurements{
 	break;
       }//else std::cout << bias_ << "\t" << fbias << std::endl;
     }
-    assert(found);
+    if(!found){
+      std::cerr << "[ERROR] bias voltage not found:" << fbias << "\t" << acquisition[0].GetDiodeName() << std::endl;
+      for(acqIndex=0; acqIndex< acquisition.size(); acqIndex++){
+	float bias__=fabs(acquisition[acqIndex].GetBias());
+	std::cout << bias__ << ", ";
+      }
+      std::cout << std::endl;
+      exit(1);
+    }
     float Q = acquisition[acqIndex].GetWaveIntegral(min, max);
-    const float Q0 = _reference->acquisition[acqIndex].GetWaveIntegral(min, max);
+    unsigned int refIndex=_reference->GetSpectrumIndexWithAbsBias(fbias);
+    return 0;
+    if(refIndex==_reference->size()) refIndex--;
+    const float Q0 = _reference->acquisition[refIndex].GetWaveIntegral(min, max);
     return Q/Q0;
   }
 
@@ -200,13 +231,16 @@ class TCTmeasurements{
     float V[MAX_ACQ]={0.};
     
     unsigned int size=acquisition.size();
-    unsigned int gSize=1;
+    unsigned int gSize=0;
+    bool warning=true; // warn only once
     for(unsigned int i=0; i < size; i++){
       V[gSize] = abs(acquisition[i].GetBias());  
       const TCTspectrum &ref = other[V[gSize]]; //GetSpectrumWithAbsBias(V[i]);
       if(ref.empty()) continue;
-      if(fabs(ref.GetBias())!=V[gSize]){
-	std::cerr << "[WARNING] Not the same bias voltage for CCE measurement for diode: " << acquisition[i].GetDiodeName() << "\t" << V[i] << " != " << fabs(ref.GetBias()) << std::endl;
+      float fbias = fabs(ref.GetBias());
+      if(fbias!=V[gSize] && warning){ //fbias!=V[gSize] && fbias<V[gSize]){
+	warning=false;
+	std::cerr << "[WARNING] Not the same bias voltage for CCE measurement for diode: " << acquisition[i].GetDiodeName() << "\t" << V[i] << " != " << fbias << std::endl;
       }
       float Q = acquisition[i].GetWaveIntegral(min, max);
       float Q0 = ref.GetWaveIntegral(min, max);
@@ -214,7 +248,7 @@ class TCTmeasurements{
       CCE[gSize]=Q/Q0;
       gSize++;
     }
-    return new TGraph(gSize-1, V,CCE);  /// \todo check why size-1
+    return new TGraph(gSize, V,CCE);  /// \todo check why size-1
   }
   /// set the reference for CCE measurement
   void SetReference(const TCTmeasurements& reference){ _reference=&reference;}; 
@@ -224,7 +258,7 @@ class TCTmeasurements{
 
   TCTspectrum Average(bool checkBias=false)const; ///< average over all acquisitions of this measurement
  private:
-  bool _checkBias; // operatations are not meant to be done as function of the bias voltage
+  //bool _checkBias; // operatations are not meant to be done as function of the bias voltage
   bool _isAverage;
   const TCTmeasurements *_reference, *_baseline;
   //TCTmeasurements &_baseline;
@@ -267,6 +301,7 @@ class TCTmeasurements{
 
  void reset(){
    acquisition.clear();
+   acquisitionRMS.clear();
    acqAbsBiasIndex.clear();
 }
 
@@ -294,6 +329,12 @@ class TCTmeasurements{
   };
   
 
+
+  void SetAcqAbsBias(void){
+    for(unsigned int i=0; i < size(); i++){
+      acqAbsBiasIndex.insert(std::make_pair<float, unsigned int>(fabs(acquisition[i].GetBias()), i));
+    }
+  }
     
  private:
   float GetBiasScanStep(void) const{
@@ -321,12 +362,16 @@ class TCTmeasurements{
   /* }; */
   
  public:
-  TCTspectrumCollection_t acquisition;
+ 
 
   private:
+  TCTspectrumCollection_t acquisition, acquisitionRMS; 
   TCTimport importer;
   
   biasMap_t biases; ///< contains the list of V for the different measurements taking into account the possibility to have multiple times the same bias voltage applied
+
+  int fPaletteColor[MAX_ACQ];
+  biasMap_t acqAbsBiasIndex;
   
 };
 #endif

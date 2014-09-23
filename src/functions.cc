@@ -36,7 +36,7 @@ measurementMap_t splitMeasurements(measMap_t m){
 	v_itr++){
       unsigned long long int index = v_itr-type_itr->second.begin();
       std::string newName = typeName+"x";  // assign a new name to the measurement
-      std::cout << newName << "\t" << index << std::endl;
+      //std::cout << newName << "\t" << index << std::endl;
       newName+=std::to_string(index);
 	 
       newMap[newName]=*v_itr;
@@ -84,7 +84,7 @@ bool checkCompatiblity(measMap_t &baselinesMap, std::string checkName, float& RM
     unsigned int n=spec.GetNsamples(0.,1e10);
     RMS+=rms;
 
-    std::cout << std::setprecision(2) << itr->first << "\t" << mean << " +/- " << rms/sqrt(n)
+    std::cout << std::setprecision(2) << std::setw(12) << itr->first << "\t" << mean << " +/- " << rms/sqrt(n)
 	      << "\t" << rms << std::endl;
     
     // check that baselines are compatible
@@ -135,7 +135,7 @@ bool checkMeasurementBaseline(float RMS, float signalStart, measMap_t baselinesM
   //make a new map, separating the measurements of the same type
   measurementMap_t newBaselines = splitMeasurements(baselinesMap);
   //splitMeasurements_t newBaselines = splitMeasurements2(baselinesMap);
-  
+ 
   TMultiGraph gg;
   gg.SetName(checkName.c_str());
   int index=0;
@@ -147,34 +147,39 @@ bool checkMeasurementBaseline(float RMS, float signalStart, measMap_t baselinesM
     // std::cout << itr->first << "\t" << ref<< "\t" << ref->size() << refstd::endl;
     //if(ref==NULL) continue;
     for(unsigned int i=0; i < itr->second.size(); i++){ // loop over all bias voltages
-      
+
       TCTspectrum& spec = itr->second.GetSpectrum(i);
       //std::cout << "i=" << i << "\t" << spec.GetN() << std::endl;
       float mean = spec.GetMean(0.,signalStart);
       float rms  = spec.GetRMS(0.,signalStart);
       unsigned int n    = spec.GetNsamples(0., signalStart);
-      if(rms>RMS*1.5 || (mean>RMS)){
+      //      assert(n>0);
+      float meanError= rms/sqrt(n);
+      if(rms>RMS*1.5 || (fabs(mean)>2*meanError)){
 	if(fabs(spec.GetBias())>100) returnValue=false; 
-
-	std::cout << std::setprecision(2) <<std::setw(9)<< itr->first << "\t" << mean << "\t+/- " << rms/sqrt(n)
+       
+	if(rms>RMS*1.5){
+	  spec.SetNoisy();
+	std::cout << std::setprecision(2) <<std::setw(9)<< itr->first << "\t" << mean << "\t+/- " << meanError
 		  << "\t" << rms << "\t" << RMS << "\t";
 	std::cout << "<--- " << std::setprecision(4) << spec.GetBias() << std::endl;
-	if(rms>RMS*1.5) spec.SetNoisy();
+	}
 	RMS+=rms;
 	//TGraph *g = spec.GetWaveForm(itr->first);
 	//g->SaveAs(("tmp/"+itr->first+".root").c_str());
       }else{
 	//std::cout << itr->first << "\t" << mean << "\t" << rms << "\t" << RMS << std::endl;
       }
-    
+
       // remove the baseline bulk current
       //spec-=mean;
       //      std::cout << mean << "\t" << spec.GetMean(0., signalStart) << std::endl;
     //returnValue = abs(mean)<rms;
-    TGraph *g = spec.GetWaveForm(itr->first,checkName+"_"+itr->first);
-    g->SetLineColor(fPaletteColor[index+1]);
-    gg.Add(g,"l");
-    index++;
+      TGraph *g = spec.GetWaveForm(itr->first,checkName+"_"+itr->first);
+      if(index<100) g->SetLineColor(fPaletteColor[index+1]);
+      else g->SetLineColor(kGray);
+      gg.Add(g,"l");
+      index++;
     }
   }
   //RMS/=index;
@@ -234,7 +239,9 @@ bool checkMeasurementBaseline2(float RMS, float signalStart, measMap_t baselines
       std::cout << mean << "\t" << spec.GetMean(0., signalStart) << std::endl;
     //returnValue = abs(mean)<rms;
     TGraph *g = spec.GetWaveForm(itr->first,checkName+"_"+itr->first);
-    g->SetLineColor(fPaletteColor[index+1]);
+    // if(index<20)
+    //   g->SetLineColor(kBlack) ; //fPaletteColor[index+1]);
+    // else g->SetLineColor(kGray);
     gg.Add(g,"l");
     index++;
     }
@@ -244,4 +251,40 @@ bool checkMeasurementBaseline2(float RMS, float signalStart, measMap_t baselines
   gg.Write();
   
   return returnValue;
+}
+
+void SetReferences(measMap_t& irradiatedsMap, measurementMap_t& referenceMap, configFileParser& parser){
+
+  for(measMap_t::iterator m_itr=irradiatedsMap.begin();
+      m_itr!=irradiatedsMap.end();
+      m_itr++){
+
+    for(TCTmeasurementsCollection_t::iterator v_itr=m_itr->second.begin(); // loop over references of the same type
+    	v_itr!=m_itr->second.end();
+    	v_itr++){
+      std::string basName = parser.find(m_itr->first)->second.GetReference();
+      if(referenceMap.count(basName)==0){
+	std::cerr << "[ERROR] No reference found for diode: " << m_itr->first << std::endl;
+	exit(1);
+      }
+      const TCTmeasurements& ref = referenceMap[basName];
+      v_itr->SetReference(ref);
+    }
+  }
+}
+
+void SetReferences(measurementMap_t& irradiatedsMap, measurementMap_t& referenceMap, configFileParser& parser){
+
+  for(measurementMap_t::iterator m_itr=irradiatedsMap.begin();
+      m_itr!=irradiatedsMap.end();
+      m_itr++){
+    TCTmeasurements *v_itr = &(m_itr->second);
+      std::string basName = parser.find(m_itr->first)->second.GetReference();
+      if(referenceMap.count(basName)==0){
+	std::cerr << "[ERROR] No reference found for diode: " << m_itr->first << std::endl;
+	exit(1);
+      }
+      const TCTmeasurements& ref = referenceMap[basName];
+      v_itr->SetReference(ref);
+  }
 }
