@@ -75,7 +75,8 @@ bool checkCompatiblity(measMap_t &baselinesMap, std::string checkName, float& RM
       itr++){
     TMultiGraph *allSpectra = itr->second.GetAllSpectra(itr->first+"_allSpectra",itr->first+"_allSpectra");
     allSpectra->Write();
-    TCTspectrum spec = itr->second.Average();
+    //const TCTspectrum &average = itr->second.GetAverageMeasurement();
+    TCTspectrum spec = itr->second.GetAverage();
     spec-=baselinesDiffRef.GetSpectrum(baselinesDiffRef.size()-1); // only 0 by construction
     
 
@@ -91,7 +92,6 @@ bool checkCompatiblity(measMap_t &baselinesMap, std::string checkName, float& RM
     assert(abs(mean)<rms); 
     returnValue = abs(mean)<rms;
     TGraph *g = spec.GetWaveForm(itr->first,itr->first);
-    
     //std::cout << spec.GetTemperature() << std::endl;
     if(spec.GetTemperature()<-25){
       g->SetLineColor(pPaletteColor[index+1]);
@@ -146,10 +146,11 @@ bool checkMeasurementBaseline(float RMS, float signalStart, measMap_t baselinesM
    
     // std::cout << itr->first << "\t" << ref<< "\t" << ref->size() << refstd::endl;
     //if(ref==NULL) continue;
-    for(unsigned int i=0; i < itr->second.size(); i++){ // loop over all bias voltages
-
-      TCTspectrum& spec = itr->second.GetSpectrum(i);
-      //std::cout << "i=" << i << "\t" << spec.GetN() << std::endl;
+    //unsigned int i=0; //i < itr->second.size(); i++){ // loop over all bias voltages
+    for(auto biter = itr->second.begin(); biter!=itr->second.end(); biter++){
+      TCTspectrum& spec = biter->second;
+      if(spec.isnull()) continue; ///\todo check why
+      
       float mean = spec.GetMean(0.,signalStart);
       float rms  = spec.GetRMS(0.,signalStart);
       unsigned int n    = spec.GetNsamples(0., signalStart);
@@ -176,6 +177,7 @@ bool checkMeasurementBaseline(float RMS, float signalStart, measMap_t baselinesM
       //      std::cout << mean << "\t" << spec.GetMean(0., signalStart) << std::endl;
     //returnValue = abs(mean)<rms;
       TGraph *g = spec.GetWaveForm(itr->first,checkName+"_"+itr->first);
+      // std::cout << g->GetN() << std::endl;
       if(index<100) g->SetLineColor(fPaletteColor[index+1]);
       else g->SetLineColor(kGray);
       gg.Add(g,"l");
@@ -274,7 +276,7 @@ void SetReferences(measMap_t& irradiatedsMap, measurementMap_t& referenceMap, co
 }
 
 void SetReferences(measurementMap_t& irradiatedsMap, measurementMap_t& referenceMap, configFileParser& parser){
-
+  std::cout << "[STATUS] Setting references" << std::endl;
   for(measurementMap_t::iterator m_itr=irradiatedsMap.begin();
       m_itr!=irradiatedsMap.end();
       m_itr++){

@@ -18,16 +18,16 @@ class TCTimport{
   /// basic constructor 
   TCTimport(){};
 
-  inline void ReadLine(std::ifstream& f, TCTspectrum &meas){
+  inline bool ReadLine(std::ifstream& f, TCTspectrum &meas){
     float value; 
     std::string line;
     for(int i=0; i<4; i++){ // skip fields
       f >> line; // 
     }
     
-    
+    if(f.fail()) return false;
     f >> value;  // bias
-    
+    std::cout << value << std::endl;
     meas.SetBias(value);
     //    std::cout << value << meas.GetBias() << std::endl;
     f >> value; // Attenuator [10 dB]
@@ -61,7 +61,7 @@ class TCTimport{
     
 
     //    assert(!f.fail());
-    return;
+    return true;
   }
 
   inline TCTspectrumCollection_t ImportFromFile(std::string filename){
@@ -130,12 +130,12 @@ class TCTimport{
     TCTspectrumCollection_t measurements;
     while(f.good() && f.peek()!=EOF){
       TCTspectrum newMeas = meas; // create a new waveform from the base one (the one keeping the general info)
-      ReadLine(f, newMeas);		      
-      measurements.push_back(newMeas);
+      if(ReadLine(f, newMeas))
+	measurements.insert(std::make_pair(fabs(newMeas.GetBias()), newMeas));
     }
-    float lastStepValue=measurements.rbegin()->GetBias();
-    if(lastStepValue!=0 && abs(lastStepValue)<0.001) measurements.pop_back(); /// remove the last point if not significative
-    std::cout << "   Bias scan from: " << measurements.begin()->GetBias() << " to " << measurements.rbegin()->GetBias() << std::endl;
+    //    float lastStepValue=measurements.rbegin()->first;
+    //if(lastStepValue!=0 && abs(lastStepValue)<0.001) measurements.pop_back(); /// remove the last point if not significative
+    std::cout << "   Bias scan from: " << measurements.begin()->first << " to " << measurements.rbegin()->first << std::endl;
     return measurements;
   };
   

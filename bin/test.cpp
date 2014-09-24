@@ -198,19 +198,16 @@ void PlotCCEvsV(measurementMap_t& referencesMap, float startSignal, float endSig
   }
 }
 
-void DumpCCE(configFileParser& parser, measMap_t& referencesMap, float bias, float startSignal, float endSignal){
+void DumpCCE(configFileParser& parser, measurementMap_t& referencesMap, float bias, float startSignal, float endSignal){
   //--------------- plots of CCEvsV for references
-  for(measMap_t::iterator m_itr=referencesMap.begin();
+  for(measurementMap_t::iterator m_itr=referencesMap.begin();
       m_itr!=referencesMap.end();
       m_itr++){
-
-    for(TCTmeasurementsCollection_t::iterator v_itr=m_itr->second.begin(); // loop over references of the same type
-    	v_itr!=m_itr->second.end();
-    	v_itr++){
-      float CCE=v_itr->GetCCE(startSignal, endSignal, bias);
-      parser.SetCCE(m_itr->first, CCE);
-      std::cout << "[DUMP CEE]" << m_itr->first << "\t" << CCE << std::endl;
-    }
+    TCTmeasurements *v_itr = &m_itr->second;
+    float CCE=v_itr->GetCCE(startSignal, endSignal, bias);
+    parser.SetCCE(m_itr->first, CCE);
+    std::cout << "[DUMP CEE]" << m_itr->first << "\t" << CCE << std::endl;
+    
 
   }
 }
@@ -743,12 +740,14 @@ int main(int argc, char **argv){
       // subtract the baseline 
       //      std::cout << (parser.find(m_itr->first))->second.type << "\t" << basName << "\t" << std::endl;
       (*v_itr) -= baselineMap[basName].GetAverageMeasurement();
-
-      for(unsigned int i=0; i < v_itr->size(); i++){ // loop over all bias voltage
-	TGraph *gg = v_itr->GetWaveForm(i,"",""); //
+      unsigned int i=0;
+      for(auto itr=v_itr->begin(); itr!=  v_itr->end(); itr++){ // loop over all bias voltage
+	TGraph *gg = v_itr->GetWaveForm(itr,"",""); //
+	if(gg->GetN()==0) std::cout << i << "\t" << itr->first<< std::endl;
 	gg->SetLineColor(fPaletteColor[i]);
 	gg->SetLineStyle(1);
 	baselineGraphs.Add(gg, "l");
+	i++;
       }
     }
     baselineGraphs.Draw("A");
@@ -787,10 +786,12 @@ int main(int argc, char **argv){
   //SetReferences(irradiatedsMap, referenceMap, parser);
   SetReferences(irradiatedMap, referenceMap, parser);
   PlotCCEvsV(irradiatedMap, timeMin,timeMax);
+ 
   std::cout << "------------------------------CCE at 700 V" << std::endl;
-  DumpCCE(parser, irradiatedsMap, 700, timeMin, timeMax);
+  DumpCCE(parser, irradiatedMap, 600, timeMin, timeMax);
+  
   std::cout << "------------------------------CCE at 1000 V" << std::endl;
-  DumpCCE(parser, irradiatedsMap, 1000, timeMin,timeMax);
+  DumpCCE(parser, irradiatedMap, 1000, timeMin,timeMax);
 
   parser.Dump();
 

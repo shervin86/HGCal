@@ -28,6 +28,11 @@ class TCTspectrumBase{
   _nSamples(0)
     {};
 
+ TCTspectrumBase(const char *diodeName):
+  _diodeName(diodeName),
+  _nSamples(0)
+    {};
+
   TCTspectrumBase(TCTspectrumBase const& other){
     _diodeName     = other._diodeName;
     _time          = other._time;
@@ -59,6 +64,12 @@ class TCTspectrumBase{
     }
     return *this;
   }
+
+  /* std::ostream& operator<<(std::ostream& f, const TCTspectrumBase& b){ */
+  /*   f <<  "\t" << b._diodeName << "\t" << b._bias << "\t" << b._time; */
+  /*     //<< std::endl; */
+  /*   return (f); */
+  /* } */
 
   /// Acquiition time
   inline void SetTime(std::string time){ _time = time; };

@@ -18,10 +18,11 @@ class TCTspectrum: public TCTspectrumBase{
  TCTspectrum(TCTspectrumBase base): TCTspectrumBase(base), _noisy(false){};
   
  TCTspectrum(std::string diodeName): TCTspectrumBase(diodeName), _noisy(false){};
+ TCTspectrum(): TCTspectrumBase("null"), _noisy(false){};
 
   //
-  inline bool isnull(){ return empty();};
-  inline bool null(){   return empty();};
+  inline bool isnull() const{ return empty();};
+  inline bool null() const{   return empty();};
 
   inline void SetNoisy(){ _noisy=true;};
 
@@ -112,6 +113,9 @@ class TCTspectrum: public TCTspectrumBase{
 
   TCTspectrum& operator += (const TCTspectrum& other){
     unsigned int nSamples=GetN();
+    if(nSamples!=other.GetN()){
+      std::cout << "nSamples= "<<nSamples << "\t" << other.GetN() << "\t" << GetDiodeName() << std::endl;
+    }
     assert(nSamples == other.GetN() && GetTimeScanUnit() == other.GetTimeScanUnit());// other.GetTimeScanUnit());
     const float *samples = other.GetSamples();
     for(unsigned int i=0; i < nSamples; i++){
@@ -185,7 +189,7 @@ class TCTspectrum: public TCTspectrumBase{
     return sqrt(sum2/jSamples -mean*mean);
   }
 
-    
+  /// reset the spectrum to 0 (conserve the number of samples)
   void clear(void){
     *this = 0;
   };
