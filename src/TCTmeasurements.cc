@@ -1,6 +1,6 @@
 #include <TCTmeasurements.h>
 #include <iostream>
-
+#include <TAxis.h>
 
 ///average over all the acquisitions of this measurement, regardless the bias voltage applied (biasCheck==false) and ignoring the 0 bias spectrum
 TCTspectrum TCTmeasurements::GetAverage(bool checkBias)const{ 
@@ -121,7 +121,7 @@ void TCTmeasurements::Average(std::vector<TCTmeasurements> others, bool checkBia
     // make the average over all the measurements regardless the bias voltage
     _isAverage=true;
     unsigned int n=nV.begin()->second;
-    std::cout << begin()->second.GetDiodeName() << std::endl;
+    //  std::cout << begin()->second.GetDiodeName() << std::endl;
     TCTspectrum temp(begin()->second);
 
   TCTspectrum tempRMS=(temp*temp);   
@@ -134,14 +134,14 @@ void TCTmeasurements::Average(std::vector<TCTmeasurements> others, bool checkBia
       n+=nVitr->second;
     }
     
-    std::cout << "N=" <<n << std::endl;
+    //std::cout << "N=" <<n << std::endl;
     temp/=n; // mean
     tempRMS=(tempRMS/n-temp*temp).Sqrt(); // std. dev. = x2/n - (x/n)^2
     //reset();
     acquisitionAverage=temp;
     acquisitionAverageRMS=tempRMS;
   }
-  std::cout << "RMS = " << acquisitionAverageRMS.GetSamples()[10] << std::endl;
+  //std::cout << "RMS = " << acquisitionAverageRMS.GetSamples()[10] << std::endl;
 
   return;
 }
@@ -152,7 +152,13 @@ TGraphErrors *TCTmeasurements::GetAverageWaveForm(std::string graphName, std::st
     std::cerr << "[ERROR] Average spectrum not calulated yet" << std::endl;
     exit(1);
   }
-  return new TGraphErrors(size(), acquisitionAverage.GetTimes(), acquisitionAverage.GetSamples(), NULL, acquisitionAverageRMS.GetSamples());
+  TGraphErrors *g = new TGraphErrors(acquisitionAverage.GetN(), acquisitionAverage.GetTimes(), acquisitionAverage.GetSamples(), NULL, acquisitionAverageRMS.GetSamples());
+  if(graphTitle=="") graphTitle="Average";
+  g->SetTitle(graphTitle.c_str());
+  g->Draw("A");
+  g->GetXaxis()->SetTitle("time [s]");
+  g->GetYaxis()->SetTitle("I [A]");
+  return g;
 }
 
 TGraph *TCTmeasurements::GetWaveForm(const_iterator itr, std::string graphName, std::string graphTitle)const{ 
@@ -173,15 +179,27 @@ TMultiGraph *TCTmeasurements::GetAllSpectra(std::string graphName, std::string g
   if(graphName=="") graphName="validationTCT";
   TMultiGraph *baselineGraphs = new TMultiGraph();
   baselineGraphs->SetName(graphName.c_str());
-  baselineGraphs->SetTitle(graphTitle.c_str());
+  //  baselineGraphs->SetTitle(graphTitle.c_str());
 
   unsigned int i=0;
   for(auto itr=begin(); itr!=end(); itr++, i++){ // loop over all bias voltages
-    TGraph *gg = GetWaveForm(itr,"",""); //
+    //if(itr->first<1) continue;
+    char title[100];
+    sprintf(title, "U = %.0f V", itr->first); 
+    TGraph *gg = GetWaveForm(itr,"",title); //
+    //std::cout << fPaletteColor[i] << std::endl;
     gg->SetLineColor(fPaletteColor[i]);
     gg->SetLineStyle(1);
+    if(itr->first<1){
+      gg->SetLineWidth(3);
+      gg->SetLineColor(kBlack);
+    }
     baselineGraphs->Add(gg, "l");
   }
+  baselineGraphs->Draw("A");
+  baselineGraphs->GetXaxis()->SetTitle("time [s]");
+  baselineGraphs->GetYaxis()->SetTitle("I [A]");
+
   return baselineGraphs;
 }
     

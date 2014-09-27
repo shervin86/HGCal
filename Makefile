@@ -40,6 +40,7 @@ ${BUILDDIR}/test.exe: ${BUILDDIR}/test.cpp ${SRCDIR}/functions.cc ${INCLUDEDIR}/
 ${LIBDIR}/TCTspectrumBase.o: include/TCTspectrumBase.h
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTspectrumBase.o include/TCTspectrumBase.h
 
+spectrum: ${LIBDIR}/TCTspectrum.o
 ${LIBDIR}/TCTspectrum.o: ${INCLUDEDIR}/TCTspectrum.h ${SRCDIR}/TCTspectrum.cc ${INCLUDEDIR}/TCTspectrumBase.h
 	@echo "-> Making TCTspectrum"
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTspectrum.o ${SRCDIR}/TCTspectrum.cc

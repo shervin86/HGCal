@@ -47,6 +47,9 @@ class IVmeasurement{
     _guardCurrent[_nSamples]=guardCurrent; // add the new value and then increment the counter
     //std::cout << "* " << _bias[_nSamples] << "\t" << _current[_nSamples] << "\t" << std::endl;
     _nSamples++;
+    float fbias=fabs(bias);
+    __current[fbias]=current;
+    __guardCurrent[fbias]=guardCurrent;
   };
 
 
@@ -64,7 +67,7 @@ class IVmeasurement{
   inline const float* GetCurrents(void) const    { return _current;     };
   inline const float* GetGuardCurrent(void)  const   { return _guardCurrent;     };
   
-  inline TGraph *GetIvsV(bool absI=false, bool absV=false){
+  inline TGraph *GetIvsV(bool clean=true, bool absI=true, bool absV=true){
     if(_IVgraph!=NULL) delete _IVgraph; //return _IVgraph;
 
     Float_t x[MAX_SAMPLES], y[MAX_SAMPLES];
@@ -87,12 +90,56 @@ class IVmeasurement{
 	x[i]= GetBiases()[i];
       }
     }
-    _IVgraph = new TGraph(GetN(), x, y);
+    unsigned int n=GetN();
+    if(clean) RemoveWrongValues(n,x,y);
+
+    _IVgraph = new TGraph(n, x, y);
     _IVgraph->SetMarkerStyle(20);
     _IVgraph->SetMarkerSize(1);
     FindVdep(_IVgraph);
     return _IVgraph;
   }
+
+  void RemoveWrongValues(unsigned int& n, Float_t *x, Float_t *y){
+    Float_t y2[n],x2[n];
+    unsigned int j=0;
+    for(unsigned int i=0; i< n; i++){
+      y2[j]=y[i];
+      x2[j]=x[i];
+      if(i<11){
+	j++;
+	continue;
+      }
+      float diff1=fabs(y2[j]-y2[j-1]);
+      float diff2=fabs(y2[j-1]-y2[j-2]);
+      if((diff1<diff2*10 && diff1>diff2/10. )&& y2[j]>1e-9) j++; // accept diff1<1e-7 in case diff2~0
+    }
+
+    for(unsigned int i=0; i< j; i++){
+      y[i]=y2[i];
+      x[i]=x2[i];
+    }
+    n=j;
+  }
+  /*   for(auto iter = __current.begin(); */
+  /* 	iter!= __current.end(); iter++){ */
+  /*     if(iter->first<2) continue; */
+     
+  /*     auto iter2= iter, iter3=iter; */
+  /*     std::advance(iter2,-1); */
+  /*     std::advance(iter3,-2); */
+  /*     float diff23 = fabs(iter2->second-iter3->second); */
+  /*     float diff12 = fabs(iter->second-iter2->second); */
+  /*     if(diff12>diff23*10){ */
+  /* 	std::cout << "Discard value: " << iter->first << "\t" << iter3->second << " - " << iter2->second << " - " << iter->second << std::endl; */
+  /*     } */
+	
+  /*   } */
+  /* } */
+    
+  void FindVdep(bool clean){
+    FindVdep(GetIvsV(clean, true, true));
+  };
 
   void FindVdep(TGraph *g){
     Double_t *x = g->GetX();
@@ -123,17 +170,6 @@ class IVmeasurement{
   inline float GetIrev(void) const{ return _Irev; };
   inline float GetIrevError(void) const{ return _IrevError; };
 
-  inline TGraph *GetCvsV(void) const{
-    Float_t x[MAX_SAMPLES], y[MAX_SAMPLES];
-    for(unsigned int i=0; i < GetN(); i++){
-      x[i]= GetBiases()[i];
-      y[i]= 1/(GetCurrents()[i]*GetCurrents()[i]);
-    }
-    TGraph *g = new TGraph(GetN(), x, y);
-    g->SetMarkerStyle(20);
-    g->SetMarkerSize(1);
-    return g;
-  }
 
  protected:
   std::string _diodeName;       ///< code of the diode
@@ -143,6 +179,9 @@ class IVmeasurement{
   float _bias[MAX_SAMPLES]; ///< 
   float _current[MAX_SAMPLES]; ///< 
   float _guardCurrent[MAX_SAMPLES]; ///< 
+
+  std::map<float, float> __current;
+  std::map<float, float> __guardCurrent;
 
   float _temperature; ///< temperature
 

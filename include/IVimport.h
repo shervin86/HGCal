@@ -34,7 +34,9 @@ class IVimport{
     IVmeasurement meas;
     
     std::ifstream f(filename.c_str());
-    std::cout << "[STATUS] Import from file: " << filename << std::endl;
+#ifdef DEBUG
+    std::cout << "[STATUS] Import IV from file: " << filename << std::endl;
+#endif
     assert(f.good()); /// 
     
 
@@ -46,7 +48,7 @@ class IVimport{
     sscanf(line.c_str(), "%d-%d-%d %d:%d:%d", &yyyy, &mm, &dd, &hh, &min, &sec);
     char time[30]; 
     sprintf(time, "%04d_%02d_%02d_%02d_%02d_%02d", yyyy, mm, dd, hh, min, sec);
-    std::cout << "Acquisition time: " << time << std::endl;
+    //   std::cout << "Acquisition time: " << time << std::endl;
     meas.SetTime(time);
   
     std::getline(f,line); // :stop
@@ -58,7 +60,7 @@ class IVimport{
       line.resize(line.size()-1); //line.pop_back() in c++11
     }
     meas.SetDiodeName(line);
-    std::cout << line << "\t" << meas.GetDiodeName() << std::endl;
+    //std::cout << line << "\t" << meas.GetDiodeName() << std::endl;
     for(int i=0; i<10; i++){ // skip lines
       std::getline(f,line); // 
     }

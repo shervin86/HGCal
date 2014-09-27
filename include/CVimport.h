@@ -22,23 +22,36 @@ class CVimport{
 
   inline void ReadLine(std::ifstream& f, CVmeasurement &meas, unsigned int nFreq){
     float bias, temp, current, guardCurrent;
+    std::vector<float> cVec,gVec;
     std::string line;
     f >> bias >> temp;
     for(unsigned int iFreq=0; iFreq < nFreq; iFreq++){
-       f >> current >> guardCurrent;
+      f >> current;
+      if(f.fail()) return;
+      cVec.push_back(current);
+    }
+    
+    for(unsigned int iFreq=0; iFreq < nFreq; iFreq++){
+      f >> guardCurrent;
+      gVec.push_back(guardCurrent);
+    }
+    
+    for(unsigned int iFreq=0; iFreq < nFreq; iFreq++){
       //std::cout << bias << "\t" << temp << "\t" << current << std::endl; 
-      if(f.good()) meas.AddMeasurement(bias, current, guardCurrent, iFreq);
+       meas.AddMeasurement(bias, cVec[iFreq], gVec[iFreq], iFreq);
     }
   };
 
   inline std::vector<std::string> GetFrequencies(std::ifstream& f){
     std::vector<std::string> freq;
-    char freqVal[10];
+    //    char freqVal[10];
     
     std::string s;
     while(f.peek()!=13){
       std::getline(f, s, ',');
-            std::cout << "V = " << s << std::endl;
+#ifdef DEBUG 
+     std::cout << "V = " << s << std::endl;
+#endif
       freq.push_back(s);
     }
     return freq;
@@ -61,7 +74,7 @@ class CVimport{
     sscanf(line.c_str(), "%d-%d-%d %d:%d:%d", &yyyy, &mm, &dd, &hh, &min, &sec);
     char time[30]; 
     sprintf(time, "%04d_%02d_%02d_%02d_%02d_%02d", yyyy, mm, dd, hh, min, sec);
-    std::cout << "Acquisition time: " << time << std::endl;
+    // std::cout << "Acquisition time: " << time << std::endl;
     meas.SetTime(time);
   
     std::getline(f,line); // :stop
@@ -73,7 +86,7 @@ class CVimport{
       line.resize(line.size()-1); //line.pop_back() in c++11
     }
     meas.SetDiodeName(line);
-    std::cout << line << "\t" << meas.GetDiodeName() << std::endl;
+    //std::cout << line << "\t" << meas.GetDiodeName() << std::endl;
     for(int i=0; i<10; i++){ // skip lines
       std::getline(f,line); // 
     }
@@ -105,7 +118,7 @@ class CVimport{
     while(line.find("BEGIN")==std::string::npos){
       std::getline(f,line); // 
     }
-    std::cout << line << std::endl;
+    //std::cout << line << std::endl;
     while(f.good() && f.peek()!=EOF){
       //TCTspectrum newMeas = meas; // create a new waveform from the base one (the one keeping the general info)
       ReadLine(f, meas, freq.size());

@@ -27,7 +27,7 @@ class TCTimport{
     
     if(f.fail()) return false;
     f >> value;  // bias
-    std::cout << value << std::endl;
+    //std::cout << value << std::endl;
     meas.SetBias(value);
     //    std::cout << value << meas.GetBias() << std::endl;
     f >> value; // Attenuator [10 dB]
@@ -66,9 +66,10 @@ class TCTimport{
 
   inline TCTspectrumCollection_t ImportFromFile(std::string filename){
 
-
+#ifdef DEBUG
     std::cout << "[STATUS] Importing from file " <<  filename << std::endl;
-    std::string line;;
+#endif
+    std::string line;
  
     
     std::ifstream f(filename.c_str());
@@ -135,7 +136,9 @@ class TCTimport{
     }
     //    float lastStepValue=measurements.rbegin()->first;
     //if(lastStepValue!=0 && abs(lastStepValue)<0.001) measurements.pop_back(); /// remove the last point if not significative
+#ifdef DEBUG
     std::cout << "   Bias scan from: " << measurements.begin()->first << " to " << measurements.rbegin()->first << std::endl;
+#endif
     return measurements;
   };
   

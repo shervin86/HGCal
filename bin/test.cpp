@@ -40,7 +40,7 @@ Int_t fPaletteColor[150] = {kBlack, kBlue+4, kBlue-1, kBlue+3, kBlue+2, kBlue-2,
 Int_t pPaletteColor[10] = {kBlack,   
 			   kRed,   
 			   kBlue,   
-			   kGreen+4,   
+			   kGreen+2,   
 			   kGray+1,  
 			   kMagenta, kRed+2, kBlue+2, kAzure, kYellow+4};
 
@@ -134,7 +134,7 @@ void PlotQvsV(measurementMap_t& referencesMap, float startSignal, float endSigna
   }
 }
 
-void PlotCCEvsV(measMap_t& referencesMap, float startSignal, float endSignal){
+void PlotCCEvsV(configFileParser& parser, measMap_t& referencesMap, float startSignal, float endSignal){
   //--------------- plots of CCEvsV for references
   for(measMap_t::iterator m_itr=referencesMap.begin();
       m_itr!=referencesMap.end();
@@ -149,15 +149,25 @@ void PlotCCEvsV(measMap_t& referencesMap, float startSignal, float endSignal){
             
       //for(unsigned int i=0; i < v_itr->size(); i++){ // loop over all bias voltage
 	TGraph *gg = v_itr->GetCCEvsV(startSignal,endSignal); //
-	
+	TGraph *ggref= v_itr->GetReference()->GetCCEvsV(startSignal, endSignal);
 	//TGraph *gg = v_itr->GetQvsV(1.00e-7,1.10e-7); //
 	//gg->SetLineColor(fPaletteColor[i]);
+	gg->SetTitle(parser.GetLegend(m_itr->first).c_str());
 	gg->SetLineStyle(1);
 	gg->SetMarkerStyle(20);
 	gg->Draw("A");
 	gg->GetXaxis()->SetTitle("U [V]");
 	gg->GetYaxis()->SetTitle("CCE");
 	baselineGraphs.Add(gg, "p");
+
+	ggref->SetTitle(parser.GetLegend(v_itr->GetReferenceType()).c_str());
+	ggref->SetLineStyle(1);
+	ggref->SetMarkerStyle(23);
+	ggref->SetMarkerColor(2);
+	ggref->Draw("A");
+	ggref->GetXaxis()->SetTitle("U [V]");
+	ggref->GetYaxis()->SetTitle("CCE");
+	baselineGraphs.Add(ggref, "p");
 	//}
     }
     baselineGraphs.Draw("A");
@@ -169,7 +179,7 @@ void PlotCCEvsV(measMap_t& referencesMap, float startSignal, float endSignal){
 }
 
 
-void PlotCCEvsV(measurementMap_t& referencesMap, float startSignal, float endSignal){
+void PlotCCEvsV(configFileParser& parser, measurementMap_t& referencesMap, float startSignal, float endSignal){
   //--------------- plots of CCEvsV for references
   for(measurementMap_t::iterator m_itr=referencesMap.begin();
       m_itr!=referencesMap.end();
@@ -180,15 +190,26 @@ void PlotCCEvsV(measurementMap_t& referencesMap, float startSignal, float endSig
     baselineGraphs.SetTitle("CCEvsV");
     TCTmeasurements *v_itr = &m_itr->second;
     TGraph *gg = v_itr->GetCCEvsV(startSignal,endSignal); //
+    TGraph *ggref= v_itr->GetReference()->GetCCEvsV(startSignal, endSignal);
 	
-	//TGraph *gg = v_itr->GetQvsV(1.00e-7,1.10e-7); //
-	//gg->SetLineColor(fPaletteColor[i]);
+    //TGraph *gg = v_itr->GetQvsV(1.00e-7,1.10e-7); //
+    //gg->SetLineColor(fPaletteColor[i]);
+    gg->SetTitle(parser.GetLegend(m_itr->first).c_str());
 	gg->SetLineStyle(1);
 	gg->SetMarkerStyle(20);
 	gg->Draw("A");
 	gg->GetXaxis()->SetTitle("U [V]");
 	gg->GetYaxis()->SetTitle("CCE");
 	baselineGraphs.Add(gg, "p");
+
+	ggref->SetTitle(parser.GetLegend(v_itr->GetReferenceType()).c_str());
+	ggref->SetLineStyle(1);
+	ggref->SetMarkerStyle(23);
+	ggref->SetMarkerColor(2);
+	ggref->Draw("A");
+	ggref->GetXaxis()->SetTitle("U [V]");
+	ggref->GetYaxis()->SetTitle("CCE");
+	baselineGraphs.Add(ggref, "p");
 
     baselineGraphs.Draw("A");
     baselineGraphs.GetXaxis()->SetTitle("U [V]");
@@ -212,7 +233,38 @@ void DumpCCE(configFileParser& parser, measurementMap_t& referencesMap, float bi
   }
 }
 
+void SetIV(configFileParser& parser, IVMap_t ivmap){
+  for(IVMap_t::iterator itr = ivmap.begin();
+      itr!= ivmap.end();
+      itr++){
+    std::string type=itr->first;
+    IVmeasurement& iv = itr->second;
+    iv.FindVdep(false);
 
+    float Vdep = iv.GetVdep();
+    float Irev = iv.GetIrev();
+    float IrevError = iv.GetIrevError();
+    parser.SetVdepIV(type, Vdep, 0.);
+    parser.SetIrev(type, Irev, IrevError);
+  }
+}
+
+
+void SetCV(configFileParser& parser, CVMap_t ivmap){
+  for(CVMap_t::iterator itr = ivmap.begin();
+      itr!= ivmap.end();
+      itr++){
+    std::string type=itr->first;
+    CVmeasurement& cv = itr->second;
+    cv.FindVdep(false);
+
+    float Vdep = cv.GetVdep();
+    float Irev = cv.GetCend();
+    float IrevError = cv.GetCendError();
+    parser.SetVdepCV(type, Vdep, 0.);
+    parser.SetCend(type, Irev, IrevError);
+  }
+}
 
 void SetBaselines(measMap_t& irradiatedsMap, measurementMap_t& referenceMap, configFileParser& parser){
 
@@ -360,7 +412,7 @@ int main(int argc, char **argv){
   if(vm.count("tctFile")){
     tct=TCTmeasurements(tctFilename, -999);
     tct-=baseline.GetAverageMeasurement();
-    tct.SetReference(reference);
+    tct.SetReference(reference, "");
     
     tct.SetPaletteColor(fPaletteColor, 50);
     TMultiGraph *g = tct.GetAllSpectra("tctValidation", "");
@@ -432,84 +484,81 @@ int main(int argc, char **argv){
     ivFilename = parser.GetIVfilename(i);
     cvFilename = parser.GetCVfilename(i);
     tctFilename = parser.GetTCTfilename(i);
+    TCTmeasurements *tct=NULL;
+    if(tctFilename!=""){ 
+      tct=new TCTmeasurements(baseDir+"/"+tctFilename, parser.GetTemperature(i)); // add baseline measurement
+      tct->SetPaletteColor(fPaletteColor,50);
+    }
     if(type.find("bas")!=std::string::npos){
-      if(tctFilename!="") baselinesMap[type].push_back(TCTmeasurements(baseDir+"/"+tctFilename, parser.GetTemperature(i))); // add baseline measurement
+      baselinesMap[type].push_back(*tct);
     } else if(type.find("ref")!=std::string::npos){
       if(ivFilename!="")  ivMap[type]= ivimporter.ImportFromFile(baseDir+"/"+ivFilename);
       if(cvFilename!="")  cvMap[type]= cvimporter.ImportFromFile(baseDir+"/"+cvFilename);
-      if(tctFilename!="") referencesMap[type].push_back(TCTmeasurements(baseDir+"/"+tctFilename,parser.GetTemperature(i))); // add reference measurement
+      if(tctFilename!="") referencesMap[type].push_back(*tct);
     } else if(type.find("irr")!=std::string::npos){
       if(ivFilename!="") ivMap[type]= ivimporter.ImportFromFile(baseDir+"/"+ivFilename);
       if(cvFilename!="") cvMap[type]= cvimporter.ImportFromFile(baseDir+"/"+cvFilename);
-      if(tctFilename!="") irradiatedsMap[type].push_back(TCTmeasurements(baseDir+"/"+tctFilename,parser.GetTemperature(i))); // add irradiated measurement
+      if(tctFilename!="") irradiatedsMap[type].push_back(*tct);
     } else{
       std::cout << type << std::endl;
       assert(false); /// \todo replace with message and exception
     }
-    std::cout << parser.GetTCTfilename(i, baseDir) << std::endl;;
-  }
-
-
-  if(vm.count("IV")){
-  // make individual plots
-  for(IVMap_t::iterator iter = ivMap.begin();
-      iter!=ivMap.end();
-      iter++){
-    IVmeasurement& iv= iter->second;
-    TGraph *g = iv.GetIvsV(true, false);
-    float Vdep = iv.GetVdep();
-    float Irev = iv.GetIrev();
-    //    std::cout << Vdep << "\t" << Irev << std::endl;
-    g->SetName(iter->first.c_str());
-    char filename[100];
-    sprintf(filename, "%s #mum, %s, %.0f C", parser.GetThickness(iter->first).c_str(), parser.GetFluence(iter->first).c_str(), iv.GetTemperature());
-    g->SetTitle(filename);
-
-    sprintf(filename,"tmp/IV/%s-%.0f-IvsV.root",iv.GetDiodeName().c_str(),iv.GetTemperature());
-
-    std::cout << iv.GetDiodeName()
-	      << "\t" << parser.GetThickness(iter->first)
-	      << "\t" << std::setprecision(2) << iv.GetTemperature() 
-	      << std::setprecision(3)
-	      << "\t" << iv.GetVdep()
-	      << "\t" << iv.GetIrev()
-	      << std::endl;
-    TCanvas c("c","");
-
-    g->Draw("A");
-    g->GetXaxis()->SetTitle("U [V]");
-    g->GetYaxis()->SetTitle("I [A]");
-    g->SaveAs(filename);
-    c.SaveAs(TString(filename).ReplaceAll(".root",("."+imgFormat).c_str()));
     
-  } 
+    //std::cout << parser.GetTCTfilename(i, baseDir) << std::endl;;
   }
+
+
+
+
+
+  std::cout << "[INFO] Spectrum integration range: " << timeMin << " - " << timeMax << std::endl;
+ 
+  TFile outFile("outFile.root","RECREATE");
+  outFile.cd();
+  TCanvas *c1 = new TCanvas("c1","");
 
 
   if(vm.count("CV")){
-  // make individual plots
-  for(CVMap_t::iterator iter = cvMap.begin();
-      iter!=cvMap.end();
-      iter++){
-    CVmeasurement& cv= iter->second;
-    cv.SetPaletteColor(pPaletteColor, 6); 
-   std::vector<std::string> freqs = cv.GetFrequencies();
-    unsigned int iFreq=0; 
-    for(std::vector<std::string>::const_iterator freq_itr = freqs.begin();
-	freq_itr!=freqs.end();
-	freq_itr++, iFreq++){
-      
-      TGraph *g = cv.GetCvsV(iFreq);
-      //float Vdep = cv.GetVdep();
-      //float Irev = cv.GetIrev();
-      //    std::cout << Vdep << "\t" << Irev << std::endl;
-      g->SetName(iter->first.c_str());
+    std::cout << "------------------------------\n";
+    std::cout << "[STATUS] CV measurements" << std::endl;
+    // make individual plots
+    for(CVMap_t::iterator iter = cvMap.begin();
+	iter!=cvMap.end();
+	iter++){
+      std::string type=iter->first;
+      CVmeasurement& cv= iter->second;
+      cv.FindVdep(false);
+
+      cv.SetPaletteColor(pPaletteColor, 6); 
+      std::vector<std::string> freqs = cv.GetFrequencies();
+      unsigned int iFreq=0; 
+      for(std::vector<std::string>::const_iterator freq_itr = freqs.begin();
+	  freq_itr!=freqs.end();
+	  freq_itr++, iFreq++){
+	
+	TGraph *g = cv.GetCvsV(iFreq);
+	float Vdep = cv.GetVdep();
+	float Cend = cv.GetCend();
+	//    std::cout << Vdep << "\t" << Irev << std::endl;
+
+	parser.SetVdepCV(type, Vdep, 0.);
+	parser.SetCend(type, Cend, 0.);
+	g->SetMarkerStyle(20+(freq_itr-freqs.begin()));
+
+	//g->SetName(iter->first.c_str());
       char filename[100];
       sprintf(filename, "%s #mu m, %s, %.0f C, %s", parser.GetThickness(iter->first).c_str(), parser.GetFluence(iter->first).c_str(), cv.GetTemperature(), freq_itr->c_str());
       g->SetTitle(filename);
       
-      sprintf(filename,"tmp/CV/%s-%.0f-%s-CvsV.root",cv.GetDiodeName().c_str(),cv.GetTemperature(), TString(freq_itr->c_str()).ReplaceAll(" ","").Data());
-      
+    // g->GetXaxis()->SetTitle("U [V]");
+    // g->GetYaxis()->SetTitle("I [A]");
+    // g->SetName((type+"_iv").c_str());
+    // g->SetTitle(parser.GetLegend(type).c_str());
+    // g->Write();
+       
+
+      //sprintf(filename,"tmp/CV/%s-%.0f-%s-CvsV.root",cv.GetDiodeName().c_str(),cv.GetTemperature(), TString(freq_itr->c_str()).ReplaceAll(" ","").Data());
+ #ifdef DEBUG     
       std::cout << cv.GetDiodeName()
 		<< "\t" << parser.GetThickness(iter->first)
 	      << "\t" << std::setprecision(2) << cv.GetTemperature() 
@@ -517,36 +566,64 @@ int main(int argc, char **argv){
       //	      << "\t" << cv.GetVdep()
       //	      << "\t" << cv.GetIrev()
 	      << std::endl;
+#endif
     g->Draw("A");
     g->GetXaxis()->SetTitle("U [V]");
-    g->GetYaxis()->SetTitle("C [F]");
-    g->SaveAs(filename);
+    g->GetYaxis()->SetTitle("1/C^{2} [1/F^{2}]");
+    //g->SaveAs(filename);
+      }
+
+       char filename[100];
+       sprintf(filename, "%s #mu m, %s, %.0f C", parser.GetThickness(iter->first).c_str(), parser.GetFluence(iter->first).c_str(), cv.GetTemperature());
+     TMultiGraph *gg = cv.GetCvsV(iter->first, filename);      
+ //      sprintf(filename,"tmp/CV/%s-%.0f-CvsV.root",cv.GetDiodeName().c_str(),cv.GetTemperature());
+ // TCanvas c("c","");    
+   gg->Draw("A");
+      gg->GetXaxis()->SetTitle("U [V]");
+      gg->GetYaxis()->SetTitle("1/C^{2} [F^{-2}]");
+ //      g->SaveAs(filename);
+      //gg->GetYaxis()->SetRangeUser(1e-12,1e-6);
+ //      c.SetLogy();
+ //      c.BuildLegend(0.9,0.4,1,0.6);
+      gg->Write();
+ //      c.SaveAs(TString(filename).ReplaceAll(".root",("."+imgFormat).c_str()));
     }
-
-      char filename[100];
-      sprintf(filename, "%s #mu m, %s, %.0f C", parser.GetThickness(iter->first).c_str(), parser.GetFluence(iter->first).c_str(), cv.GetTemperature());
-    TMultiGraph *g = cv.GetCvsV(iter->first, filename);      
-      sprintf(filename,"tmp/CV/%s-%.0f-CvsV.root",cv.GetDiodeName().c_str(),cv.GetTemperature());
- TCanvas c("c","");    
-  g->Draw("A");
-      g->GetXaxis()->SetTitle("U [V]");
-      g->GetYaxis()->SetTitle("C [F]");
-      g->SaveAs(filename);
-      g->GetYaxis()->SetRangeUser(1e-12,1e-6);
-      c.SetLogy();
-      c.BuildLegend(0.9,0.4,1,0.6);
-      
-      c.SaveAs(TString(filename).ReplaceAll(".root",("."+imgFormat).c_str()));
-  } 
-
+  SetCV(parser, cvMap);
   // now you have all the measurements as vectors
   }
 
+  if(vm.count("IV")){
+    std::cout << "------------------------------\n";
+    std::cout << "[STATUS] IV measurements" << std::endl;
 
-  std::cout << "[INFO] Spectrum integration range: " << timeMin << " - " << timeMax << std::endl;
- 
-  TFile outFile("outFile.root","RECREATE");
-  outFile.cd();
+  // make individual plots
+    for(IVMap_t::iterator itr = ivMap.begin();
+      itr!=ivMap.end();
+      itr++){
+    std::string type=itr->first;
+    IVmeasurement& iv = itr->second;
+    iv.FindVdep(false);
+
+    float Vdep = iv.GetVdep();
+    float Irev = iv.GetIrev();
+    float IrevError = iv.GetIrevError();
+    parser.SetVdepIV(type, Vdep, 0.);
+    parser.SetIrev(type, Irev, IrevError);
+    TGraph *g = iv.GetIvsV();
+    g->SetMarkerStyle(20);
+    g->Draw("A");
+
+    g->GetXaxis()->SetTitle("U [V]");
+    g->GetYaxis()->SetTitle("I [A]");
+    g->SetName((type+"_iv").c_str());
+    g->SetTitle(parser.GetLegend(type).c_str());
+    g->Write();
+    } 
+  SetIV(parser, ivMap);
+
+  }
+
+  if(vm.count("TCT")){
 
   // make the average over measurements of the same type
   float RMS=0.;
@@ -565,6 +642,8 @@ int main(int argc, char **argv){
 
   // procedure to check the compatiblity of the baselines
   std::cout << "------------------------------\n"; 
+  std::cout << "[STATUS] TCT measurements\n" << std::endl;
+
   std::cout << "[STATUS] " << "Checking baselines compatibility" << std::endl;
   // for every baseline type make the average of all the measurements
   
@@ -599,18 +678,15 @@ int main(int argc, char **argv){
     }
     
     TGraphErrors *gg = baselineMap[typeName].GetAverageWaveForm(typeName,"average");
+    //std::cout << gg->GetN() << std::endl;
     gg->SetLineColor(kBlue);
     gg->SetFillColor(kAzure-4);
     gg->SetLineWidth(1);
     baselineGraphs.Add(gg,"l3");
     baselineGraphs.Draw("A");
     baselineGraphs.GetXaxis()->SetTitle("time [s]");
-    baselineGraphs.GetYaxis()->SetTitle("Signal [V]");
+    baselineGraphs.GetYaxis()->SetTitle("I [A]");
     baselineGraphs.Write();
-    // TCTmeasurements baselineDiff = (baselineMap[typeName]); 
-    // // baselineDiff-=baselinesDiffRef.GetAverageMeasurement();
-    // TGraphErrors *gDiff= baselineDiff.GetAverageWaveForm(typeName+"_diff", "average diff");
-    // gDiff->SaveAs("gDiff.root");
   }  
   
   if(vm.count("onlyBaselines")) return 0;
@@ -647,7 +723,7 @@ int main(int argc, char **argv){
     // h.Write();
     baselineGraphs.Draw("A");
     baselineGraphs.GetXaxis()->SetTitle("time [s]");
-    baselineGraphs.GetYaxis()->SetTitle("Signal [V]");
+    baselineGraphs.GetYaxis()->SetTitle("I [A]");
     baselineGraphs.GetXaxis()->SetRangeUser(timeMin,timeMin+3e-8);
     baselineGraphs.Write();
   }    
@@ -664,7 +740,7 @@ int main(int argc, char **argv){
     
     TMultiGraph baselineGraphs;
     baselineGraphs.SetName((type_itr->first+"_spectra").c_str());
-    baselineGraphs.SetTitle(type_itr->first.c_str());
+    baselineGraphs.SetTitle(parser.GetLegend(type_itr->first).c_str());
 
     for(TCTmeasurementsCollection_t::iterator v_itr=type_itr->second.begin(); // loop over references of the same type
     	v_itr!=type_itr->second.end();
@@ -682,6 +758,10 @@ int main(int argc, char **argv){
       for(unsigned int i=0; i < v_itr->size(); i++){ // loop over all bias voltage	
 	TGraph *gg = v_itr->GetWaveForm(i,"",""); //
 	gg->SetLineColor(fPaletteColor[i]);
+	if(i==v_itr->size()-1){
+	  gg->SetLineColor(kBlack);
+	  gg->SetLineWidth(5);
+	}
 	gg->SetLineStyle(1);
 	baselineGraphs.Add(gg, "l");
 	if(abs(v_itr->GetSpectrum(i).GetBias())==600){
@@ -697,7 +777,7 @@ int main(int argc, char **argv){
     }
     baselineGraphs.Draw("A");
     baselineGraphs.GetXaxis()->SetTitle("time [s]");
-    baselineGraphs.GetYaxis()->SetTitle("Signal [V]");
+    baselineGraphs.GetYaxis()->SetTitle("I [A]");
     baselineGraphs.GetXaxis()->SetRangeUser(timeMin,timeMin+3e-8);
     baselineGraphs.Write();
   
@@ -706,7 +786,7 @@ int main(int argc, char **argv){
   
   //  checkCompatiblity(referencesMap, "checkReferences", RMS);
 
-  if(!checkMeasurementBaseline(RMS, timeMin, referencesMap, "checkReferencesBaseline")){
+  if(!checkMeasurementBaseline(RMS, timeMin, timeMax, referencesMap, "checkReferencesBaseline")){
     std::cerr << "[WARNING] check association of references and baselines" << std::endl;
     //return 1;
   }
@@ -746,19 +826,24 @@ int main(int argc, char **argv){
 	if(gg->GetN()==0) std::cout << i << "\t" << itr->first<< std::endl;
 	gg->SetLineColor(fPaletteColor[i]);
 	gg->SetLineStyle(1);
+	if(i==v_itr->size()-1){
+	  gg->SetLineColor(kBlack);
+	  gg->SetLineWidth(5);
+	}
+
 	baselineGraphs.Add(gg, "l");
 	i++;
       }
     }
     baselineGraphs.Draw("A");
     baselineGraphs.GetXaxis()->SetTitle("time [s]");
-    baselineGraphs.GetYaxis()->SetTitle("Signal [V]");
+    baselineGraphs.GetYaxis()->SetTitle("I [A]");
 
     baselineGraphs.Write();
   
   }
 
-  if(!checkMeasurementBaseline(RMS, timeMin, irradiatedsMap, "checkIrradiatesBaseline")){
+  if(!checkMeasurementBaseline(RMS, timeMin, timeMax, irradiatedsMap, "checkIrradiatesBaseline")){
     std::cerr << "[WARNING] check association of irradiated diodes and baselines" << std::endl;
     //return 1;
   }
@@ -785,13 +870,18 @@ int main(int argc, char **argv){
   //return 0;
   //SetReferences(irradiatedsMap, referenceMap, parser);
   SetReferences(irradiatedMap, referenceMap, parser);
-  PlotCCEvsV(irradiatedMap, timeMin,timeMax);
- 
+  PlotCCEvsV(parser,irradiatedMap, timeMin,timeMax);
+
+  //bias Qref Qirr CCE IV CV455 CV1MHz 
+  gnuplot(parser, referenceMap, irradiatedMap, cvMap, ivMap);
+
   std::cout << "------------------------------CCE at 700 V" << std::endl;
   DumpCCE(parser, irradiatedMap, 600, timeMin, timeMax);
   
   std::cout << "------------------------------CCE at 1000 V" << std::endl;
   DumpCCE(parser, irradiatedMap, 1000, timeMin,timeMax);
+
+  }
 
   parser.Dump();
 
@@ -799,154 +889,6 @@ int main(int argc, char **argv){
   outFile.Close();
     return 0;
   
-  
-  
 
-  return 0;
-#ifdef shervin
-  int Vindex=0;
-  TGraph *g = l.GetWaveForm(Vindex, "FZ320N_04_DiodeL_5_2014_08_18_15_37_-700 reference ", "");
-  g->SaveAs("test.root");
-  return 0;
-
-
-  Vindex=0;
-  //------------------------------ list of acquisition
-  std::vector<TCTmeasurements> FZ320N_ref;
-  //FZ320N_ref.push_back(TCTmeasurements ("data/FZ320N_04_DiodeL_5/2014_08_18_15_12.mct")); // test do not use it
-  FZ320N_ref.push_back(TCTmeasurements("data/FZ320N_04_DiodeL_5/2014_08_18_15_37.mct")); //
-  //FZ320N_ref.push_back(TCTmeasurements("data/FZ320N_04_DiodeL_5/2014_08_19_13_53.mct")); // 
-  FZ320N_ref.push_back(TCTmeasurements("data/FZ320N_04_DiodeL_5/2014_08_19_13_57.mct")); // 
-  //FZ320N_ref.push_back(TCTmeasurements("data/FZ320N_04_DiodeL_5/2014_08_19_16_39.mct")); // 
-
-
-  //--------------- baseline
-  std::vector<TCTmeasurements> baselines;
-  //baselines.push_back(TCTmeasurements("data/FZ320N_04_DiodeL_5/2014_08_19_16_42.mct")); // with reference diode
-  baselines.push_back(TCTmeasurements("data/FZ320N_010_DiodeL_11/2014_08_18_17_29.mct"));
-  //--------------- neutron irradiated 4e14
-  std::vector<TCTmeasurements> FZ320N_010_DiodeL_11;
-  FZ320N_010_DiodeL_11.push_back(TCTmeasurements("data/FZ320N_010_DiodeL_11/2014_08_18_17_08.mct"));
-  
-  std::vector<TCTmeasurements> FZ320N_03_DiodeL_8;
-  
-  std::vector<TCTmeasurements> FZ320P_01_DiodeL_11;
-  std::vector<TCTmeasurements> FZ320P_03_DiodeL_9;
-
-  //--------------- neutron irradiated 6e14
-  std::vector<TCTmeasurements> FZ320N_03_DiodeL_9;
-  std::vector<TCTmeasurements> FZ320N_04_DiodeL_9;
-  
-  std::vector<TCTmeasurements> FZ320P_04_DiodeL_8;
-  std::vector<TCTmeasurements> FZ320P_06_DiodeL_9;
-  
-
-  //------------------------------ calculate baseline
-  TCTmeasurements baseline=baselines[0]; //initialize
-  baseline.clear();
-  baseline.Average(baselines);
-
-  //------------------------------ plot the waveforms
-  TMultiGraph FZ320N_multigraph;
-  FZ320N_multigraph.SetName("multi");
-  g = FZ320N_ref[0].GetWaveForm(Vindex, "FZ320N_04_DiodeL_5_2014_08_18_15_37_-700 reference ", "");
-  
-  
-  FZ320N_multigraph.Add(g,"l");
-
-  g= FZ320N_ref[1].GetWaveForm(Vindex, "FZ320N_04_DiodeL_5_2014_08_19_13_57_-700 reference", "");
-  g->SetLineColor(kRed);
-  FZ320N_multigraph.Add(g,"l");
-
-
-  g = baselines[0].GetWaveForm(0, "FZ320N_010_DiodeL_11_2014_08_18_17_29_-150 irr. baseline 0", "");
-  g->SetLineColor(kBlue);
-  g->SetLineStyle(2);
-  FZ320N_multigraph.Add(g,"l");
- 
-  g = baselines[0].GetWaveForm(1, "FZ320N_010_DiodeL_11_2014_08_18_17_29_-150 irr. baseline 1", "");
-  g->SetLineColor(kBlue); 
-  g->SetLineStyle(1);
-
-  FZ320N_multigraph.Add(g,"l");
-
-  g = baseline.GetWaveForm(0, "FZ320N_010_DiodeL_11_2014_08_18_17_29_-150 irr. baseline average", "");
-  g->SetLineColor(kBlue);
-  g->SetLineStyle(0);
-  FZ320N_multigraph.Add(g,"l");
-
-
-  g = FZ320N_010_DiodeL_11[0].GetWaveForm(Vindex, "FZ320N_010_DiodeL_11_2014_08_18_17_08_-700 irradiated 4e14", "");
-  g->SetLineColor(kGreen);
-  FZ320N_multigraph.Add(g,"l");
-  //std::cout << "N= " << FZ320N_010_DiodeL_11[0].GetN() << std::endl;
-  FZ320N_010_DiodeL_11[0]-=baseline.GetAverageMeasurement();
-  g = FZ320N_010_DiodeL_11[0].GetWaveForm(0, "FZ320N_010_DiodeL_11_2014_08_18_17_08_-700 irradiated 4e14 baseline subtr.", "");
-  g->SetLineColor(kBlack);
-  g->SetLineStyle(2);
-  FZ320N_multigraph.Add(g,"l");
-  
-  FZ320N_multigraph.SaveAs("spectra.root");
- 
-
-  TGraph FZ320N_ref_2_0_QvsV = FZ320N_ref[0].GetQvsV(86e-9,116e-9);
-  FZ320N_ref_2_0_QvsV.SaveAs("QvsV.root");
-
-  TCTmeasurements CCE(FZ320N_ref[0]);
-  CCE=FZ320N_ref[0];
-  TGraph FZ320N_CCE_2_0_QvsV = CCE.GetCCEvsV(FZ320N_ref[0],86e-9,96e-9);
-  FZ320N_CCE_2_0_QvsV.SaveAs("f2.root");
-
-#endif
-  return 0;
 }
-
-#ifdef shervin
-
-  //TCTimport import;
-
-  //reference diode, N-type, FZ320N_04_DiodeL_5
-  TCTmeasurementCollection_t FZ320N_ref_1 = import.ImportFromFile("data/FZ320N_04_DiodeL_5/2014_08_18_15_12.mct"); // test do not use it
-  std::cout << FZ320N_ref_1.GetDiodeName() << "\t" << FZ320N_ref_1.GetTime() << std::endl;
-  TCTmeasurementCollection_t FZ320N_ref_2 = import.ImportFromFile("data/FZ320N_04_DiodeL_5/2014_08_18_15_37.mct");
-
-
-  //  TCTmeasurement FZ320N_ref_3 = import.ImportFromFile("data/FZ320N_04_DiodeL_5/2014_08_18_17_08.mct");
-  //TCTmeasurement FZ320N_ref_4 = import.ImportFromFile("data/FZ320N_04_DiodeL_5/2014_08_18_17_29.mct");
-
-
-
-  TGraph FZ320N_ref_2_graph_0=FZ320N_ref_2[0].GetWaveForm();
-  TGraph FZ320N_ref_2_graph_1=FZ320N_ref_2[10].GetWaveForm();
-  //TGraph FZ320N_ref_3_graph=FZ320N_ref_3.GetWaveForm();
-  //TGraph FZ320N_ref_4_graph=FZ320N_ref_4.GetWaveForm();
-
- 
-  FZ320N_ref_multi.SetName("multi");
-
-  FZ320N_ref_multi.Add(&FZ320N_ref_2_graph_0);
-  std::cout << "integral = " << FZ320N_ref_2[0].GetWaveIntegral(86e-9,96e-9) << std::endl;
-  FZ320N_ref_multi.Add(&FZ320N_ref_2_graph_1);
-  
-  FZ320N_ref_multi.SaveAs("f.root");
-
-  ///////////////////////////////////////////////////
-  float Q[MAX_SAMPLES]={0.};
-  float V[MAX_SAMPLES]={0.};
-  
-  for(TCTmeasurementCollection_t::const_iterator m_itr = FZ320N_ref_2.begin();
-      m_itr != FZ320N_ref_2.end();
-      m_itr++){
-    Q[m_itr-FZ320N_ref_2.begin()] = m_itr->GetWaveIntegral(86e-9,96e-9);
-    V[m_itr-FZ320N_ref_2.begin()] = abs(m_itr->GetBias());
-  }
-  TGraph FZ320N_ref_2_QvsV(FZ320N_ref_2.size()-1,V,Q);
-  
-  FZ320N_ref_2_QvsV.SaveAs("QvsV.root");
-
-  return 0;
-}
-
-
-#endif
 

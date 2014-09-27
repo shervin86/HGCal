@@ -9,6 +9,10 @@
 
 #include <TGraph.h>
 #include <TMultiGraph.h>
+#include <TFitResult.h>
+#include <TString.h>
+
+#include <cmath>
 
 /** \class CVmeasurement CVmeasurement.h include/CVmeasurement.h
 * This class provides the high level informations
@@ -74,6 +78,10 @@ class CVmeasurement{
       _bias.push_back(b);
       _current.push_back(c);
       _guardCurrent.push_back(g);
+      _Vdep_vec.push_back(0.);
+      _Cend_vec.push_back(0.);
+      _CendError_vec.push_back(0.);
+      
     }
   };
  
@@ -111,9 +119,9 @@ class CVmeasurement{
   inline TGraph *GetCvsV(unsigned int iFreq) const{
     Float_t x[MAX_SAMPLES], y[MAX_SAMPLES];
     for(unsigned int i=0; i < GetN(iFreq); i++){
-      x[i]= GetBiases(iFreq)[i];
-      //y[i]= 1/(GetCurrents(iFreq)[i]*GetCurrents(iFreq)[i]);
-      y[i]= GetCurrents(iFreq)[i];
+      x[i]= fabs(GetBiases(iFreq)[i]);
+      y[i]= 1/(GetCurrents(iFreq)[i]*GetCurrents(iFreq)[i]);
+      //y[i]= GetCurrents(iFreq)[i];
       //std::cout << x[i] << "\t" << y[i] << std::endl;
     }
 
@@ -143,6 +151,80 @@ class CVmeasurement{
     return graph;
   }
 
+
+    
+  void FindVdep(bool clean){
+    for(unsigned int i = 0; i < _freq.size(); i++){
+      FindVdep(GetCvsV(i),i);
+    }
+  };
+
+  void FindVdep(TGraph *g, unsigned int iFreq){
+    Double_t *x = g->GetX();
+    unsigned int n = g->GetN();
+    int min=0;
+    int max=n-1;
+      
+
+    TFitResultPtr p = g->Fit("pol1","QS");
+    TF1 *f = g->GetFunction("pol1");
+    //std::cout << fabs(p->GetParams()[1]) << "\t" << p->GetErrors()[1] << "\t" << (fabs(p->GetParams()[1]) > p->GetErrors()[1]) << true << std::endl;
+    while(fabs(p->GetParams()[1])>p->GetErrors()[1] && min<max){
+      //std::cout << "ciao" << std::endl;
+      if(x[max]>x[min]) p = g->Fit(f,"QS","",x[min], x[max]);
+      else p = g->Fit(f,"QS","",x[max], x[min]);
+      min++;
+      //std::cout << x[min] << "\t" << x[max] << std::endl;
+      //p->Print();
+    }
+    //p->Print();
+    _Vdep_vec[iFreq]=x[min];
+    double fff=p->GetParams()[0];
+    _Cend_vec[iFreq]=1./sqrt(fff);
+    _CendError_vec[iFreq]=0.5/sqrt(fff*fff*fff)*p->GetErrors()[0];   
+  }
+
+  unsigned int MaxFreqIndex(void){
+    float fmax=0;
+    unsigned int imax=0;
+
+    for(unsigned int i = 0; i < _freq.size(); i++){
+      TString s=_freq[i].c_str();
+      s.ReplaceAll("Hz","");
+      s.ReplaceAll(" ","");
+      s.ReplaceAll("M","e6");
+      s.ReplaceAll("k","e3");
+      float f = s.Atof();
+      if(f>fmax){
+	fmax=f;
+	imax=i;
+      }
+    }
+    return imax;
+  }
+
+  unsigned int RefFreqIndex(void){
+    float fmax=0;
+    unsigned int imax=0;
+
+    for(unsigned int i = 0; i < _freq.size(); i++){
+  
+      TString s=_freq[i].c_str();
+      s.ReplaceAll("Hz","");
+      s.ReplaceAll(" ","");
+      s.ReplaceAll("M","e6");
+      s.ReplaceAll("k","e3");
+      float f = s.Atof();
+      if(f==455) return i;
+    }
+    std::cerr << "[ERROR] Reference frequence 455 Hz not found!" << std::endl;
+    return 0;
+  }
+
+  float GetVdep(int iFreq=-1){ if(iFreq<0) iFreq=RefFreqIndex(); return _Vdep_vec[iFreq];};
+  float GetCend(int iFreq=-1){ if(iFreq<0) iFreq=MaxFreqIndex(); return _Cend_vec[iFreq];};
+  float GetCendError(int iFreq=-1){ if(iFreq<0) iFreq=MaxFreqIndex(); return _CendError_vec[iFreq];};
+
  protected:
   std::string _diodeName;       ///< code of the diode
   std::string _time;            ///< date of acquisition
@@ -151,9 +233,13 @@ class CVmeasurement{
   std::vector<float*> _bias; ///< 
   std::vector<float*> _current; ///< 
   std::vector<float*> _guardCurrent; ///< 
-
+  
   float _temperature; ///< temperature
   std::vector<std::string> _freq;
+
+  float _Vdep;             ///< depletion voltage
+  float _Cend, _CendError; ///< end capacitance and uncertainty
+  std::vector<float> _Vdep_vec, _Cend_vec, _CendError_vec;
 };
 
 

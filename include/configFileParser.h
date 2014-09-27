@@ -33,10 +33,14 @@ class configFileContent{
     IVdate, ///< date of the IV measurement
     CVdate; ///< date of the CV measurement
   float Vdep_CV, ///< depletion voltage measured from CV
+    Vdep_CVerror,
     Vdep_IV, ///< depletion voltage measured from IV
+    Vdep_IVerror, ///<
     Vdep_TCT, ///< depletion voltage measured from TCT
-    CCE; ///< charge collection efficiency measured with TCT
-    
+    CCE, ///< charge collection efficiency measured with TCT
+    Irev, ///< 
+    IrevError,
+    Cend, CendError;
   
  public:
   inline std::string GetThickness() const{ 
@@ -54,20 +58,28 @@ class configFileContent{
 
   configFileContent& operator<<(std::ostream& f){
     f << type << "\t" << diodeName << "\t" << irradiation << "\t" << GetThickness() << "\t" << GetTemperature()
-	      << "\t" << Vdep_CV
-	      << "\t" << Vdep_IV
-	      << "\t" << Vdep_TCT
-      	      << "\t" << CCE;
+      << "\t" << Vdep_CV
+      << "\t" << Vdep_IV
+      << "\t" << Vdep_TCT
+      << "\t\t" << Irev
+      << "\t" << IrevError
+      << "\t" << Cend
+      << "\t" << CendError
+      << "\t\t" << CCE;
       //<< std::endl;
     return *this;
   }
       
   void intestazione(std::ostream& f){
-    f << "ID" << "\t" << "diodeName" << "\t" << "\tfluence" << "\t" << "Thick" << "\t" << "Temp"
-	      << "\t" << "Vdep_CV"
-	      << "\t" << "Vdep_IV"
-	      << "\t" << "Vdep_TCT"
-      	      << "\t" << "CCE";
+    f << "ID\t" << "\t" << "diodeName" << "\t" << "\tfluence" << "\t" << "Thick" << "\t" << "Temp"
+      << "\t" << "Vdep_CV"
+      << "\t" << "Vdep_IV"
+      << "\t" << "Vdep_TCT"
+      << "\t" << "Irev"
+      << "\t" << "IrevError"
+      << "\t" << "Cend"
+      << "\t" << "CendError"
+      << "\t" << "CCE";
       //<< std::endl;
     return ;
   }
@@ -166,7 +178,7 @@ class configFileParser{
   }
 
   inline std::string GetFluence(std::string type) const { return GetFluence(find(type));};
-  inline std::string GetFluence(lines_t::const_iterator iter) const{ return iter->second.irradiation;};
+  inline std::string GetFluence(lines_t::const_iterator iter) const{ std::string fluence = iter->second.irradiation; if(fluence=="-") fluence="0"; return fluence;};
   inline std::string GetThickness(std::string type) const{ 
     std::string thickness= GetThickness(find(type));
     return thickness;
@@ -196,10 +208,11 @@ class configFileParser{
 
     std::string legend;
     legend+=GetThickness(iter);
-    legend+=", ";
+    legend+=" um, ";
     legend+=GetFluence(iter);
-    legend+=", ";
-     legend+=GetTemperatureString(iter);
+    legend+=" cm^{-2}, ";
+    legend+=GetTemperatureString(iter);
+    legend+=" C";
     return legend;
   }
 
@@ -267,17 +280,45 @@ class configFileParser{
     return;
   }
 
+  void SetVdepIV(std::string type, float value, float valueError){
+    auto itr = find(type);
+    itr->second.Vdep_IV=value;
+    itr->second.Vdep_IVerror=valueError;
+  }
+
+  void SetIrev(std::string type, float value, float valueError){
+    auto itr = find(type);
+    itr->second.Irev=value;
+    itr->second.Irev=valueError;
+  }
+
+  void SetVdepCV(std::string type, float value, float valueError){
+    auto itr = find(type);
+    itr->second.Vdep_CV=value;
+    itr->second.Vdep_CVerror=valueError;
+  }
+
+  void SetCend(std::string type, float value, float valueError){
+    auto itr = find(type);
+    itr->second.Cend=value;
+    itr->second.CendError=valueError;
+  }
+
+
   void Dump(std::string type="irr"){
     configFileContent & p = lines.begin()->second; //
     p.intestazione(std::cout);
     std::cout << std::endl;
     
-     
+    lines_t::key_type oldVal;
     for(lines_t::iterator itr = lines.begin();
 	itr!=lines.end();
 	itr++){
+      if(oldVal==itr->first) continue;
+      oldVal=itr->first;
       if(itr->first.substr(0,3)==type){
-      //   std::cout << 
+	
+     //   std::cout << 
       configFileContent & p = itr->second; //
       p << std::cout;
       std::cout << std::endl;

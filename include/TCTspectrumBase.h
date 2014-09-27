@@ -10,7 +10,7 @@
 /** \class TCTspectrumBase TCTspectrumBase.h include/TCTspectrumBase.h
     This class provides the basic informations contained in the txt
     files. Operations on the measurement and more advanced operations
-    should be done in another class inheriting from this.
+    are implemented in TCTspectrum class
 
     \todo 
       - add the type of irradiation
@@ -23,7 +23,8 @@
 #define MAX_SAMPLES 1005
 class TCTspectrumBase{
  public:
- TCTspectrumBase(std::string& diodeName):
+  /// default constructor
+ TCTspectrumBase(std::string& diodeName): 
   _diodeName(diodeName),
   _nSamples(0)
     {};
@@ -33,7 +34,9 @@ class TCTspectrumBase{
   _nSamples(0)
     {};
 
+  /// copy constructor
   TCTspectrumBase(TCTspectrumBase const& other){
+    *this = other;
     _diodeName     = other._diodeName;
     _time          = other._time;
     _annealing     = other._annealing;
@@ -47,9 +50,9 @@ class TCTspectrumBase{
     }
   }
     
-  ~TCTspectrumBase(){
+  ~TCTspectrumBase(){}
 
-  }
+  /// copy content from other measurement
   inline TCTspectrumBase& operator = (const TCTspectrumBase& other){
     _diodeName     = other._diodeName;
     _time          = other._time;

@@ -7,9 +7,11 @@
 #include <TGraphErrors.h>
 #include <TMultiGraph.h>
 
+#include <TFitResult.h>
+
 #include <cstdlib>
 #include <map>
-
+#include <iomanip>
 /// Assembly the information from several measurements to get spectra, QvsV, CCEvsV, IvsV,CvsV graphs
 
 /// maximum number of acquisitions in one scan
@@ -19,7 +21,7 @@
  */
 class TCTmeasurements{
  public:
-  typedef std::multimap<float, unsigned int> biasMap_t;
+  //  typedef std::multimap<float, unsigned int> biasMap_t;
   
   // default constructor
  TCTmeasurements(std::string filename, float temp): 
@@ -87,7 +89,7 @@ class TCTmeasurements{
     /*   std::cout << it->first << "\t" << it->second.GetDiodeName() << std::endl; */
     /* } */
     auto iter = (acquisition.upper_bound(fbias));
-    if(iter==end()) return end();
+    if(iter==begin()) return end();
     iter--;
     if(fabs(iter->first-fbias)<1e-2) return iter;
     return end();
@@ -140,6 +142,9 @@ class TCTmeasurements{
     acquisition=other.acquisition;
     acquisitionRMS=other.acquisition;
     _isAverage=other._isAverage;
+    for(unsigned int i=0; i < MAX_ACQ; i++){
+      fPaletteColor[i]=other.fPaletteColor[i];
+    }
     return *this;
   };
   
@@ -174,67 +179,99 @@ class TCTmeasurements{
       i++;
       assert(i<MAX_ACQ);
     }
-    return new TGraph(i, V,Q);  /// \todo check why size-1
+    //return new TGraph(i, V,Q);  /// \todo check why size-1
+    TGraph *g= new TGraph(i, V,Q);  /// \todo check why size-1
+    Vdep(g);
+    return g;
   }
 
-  TGraph *GetCCEvsV(float min, float max){
+  
+  Double_t Vdep(TGraph *g, int nmin=25){
+  Int_t n = g->GetN();
+  Double_t *x = g->GetX();
+  Double_t *y = g->GetY();
+  Float_t chi2=0;
+  Double_t Irev=0;
+  int ndf=1;
+
+  
+  int min=0;
+  int max=n-1;
+  TFitResultPtr p = g->Fit("pol1","QS");
+  TF1 *f = g->GetFunction("pol1");
+  //std::cout << x[min] << "\t" << x[max] << "\t" << p->GetParams()[1] << std::endl;
+  while(abs(p->GetParams()[1])<p->GetErrors()[1]){
+    //std::cout << x[min] << "\t" << x[max] << std::endl;
+    p = g->Fit(f,"SQ","",x[min], x[max]);
+    min++;
+    if(max-min<nmin) break;
+  }
+  //  p->Print();
+  return x[min];
+}
+
+
+  TGraph *GetCCEvsV(float min, float max)const{
     return GetCCEvsV(*_reference, min, max);
   }
 
   inline float GetCCE(float min, float max, float bias) const{
-    assert(_reference!=NULL);
+    const TCTmeasurements *_r = _reference;
+    if(_reference==NULL) _r=&(*this);
 
     float fbias=fabs(bias);
   
     auto spItr = (*this)[fbias];
-    
-    const TCTspectrum& sp=GetSpectrumWithBias(bias);
-    if(sp.isnull()){
+    if(spItr==end()){
       std::cerr << "[ERROR] bias voltage not found:" << fbias << "\t" << acquisition.begin()->second.GetDiodeName() << std::endl;
-      
-    for(const_iterator iter=begin(); iter!=end(); iter++){
+      for(const_iterator iter=begin(); iter!=end(); iter++){
 	std::cout << iter->first << ", ";
       }
       std::cout << std::endl;
       exit(1);
     }
   
-    float Q = sp.GetWaveIntegral(min, max);
-    const TCTspectrum& ref = _reference->GetSpectrumWithBias(fbias);
-    assert(!ref.isnull());
-    const float Q0 = ref.GetWaveIntegral(min, max);
+    float Q = spItr->second.GetWaveIntegral(min, max);
+    float Q0 = 0.;
+    auto ref=_r->end();
+   //take the average over 25 last points
+    unsigned int i=0;
+    for(; i<2; i++){
+      ref--;
+      Q0+=ref->second.GetWaveIntegral(min, max);  
+    }
+    Q0/=i;
+    ref = (*_r)[fbias];
+    //if(ref!=_r->end()){
+    //std::cout << std::setprecision(3) <<Q0 << "\t" << ref->second.GetWaveIntegral(min, max) << std::endl;;  
+    //}
+ 
+   
     return Q/Q0;
   }
 
-  TGraph *GetCCEvsV(const TCTmeasurements& other, float min, float max){
+  TGraph *GetCCEvsV(const TCTmeasurements& other, float min, float max)const {
     float CCE[MAX_ACQ]={0.};
     float V[MAX_ACQ]={0.};
     
     bool warning=true; // warn only once
     unsigned int i=0;
-    for(iterator iter=begin(); iter!=end(); iter++){
+    for(const_iterator iter=begin(); iter!=end(); iter++){
       //      Q[i] = iter->second.GetWaveIntegral(min, max,iter->second.GetMean(0.,min));
       V[i] = iter->first;
-      const TCTspectrum &ref = other.GetSpectrumWithBias(V[i]); 
-      if(ref.empty()) continue; /// \todo fix-it
-      float fbias=fabs(ref.GetBias());
-      if(V[i]!=fbias && warning){ //fbias!=V[gSize] && fbias<V[gSize]){
-	warning=false;
-	std::cerr << "[WARNING] Not the same bias voltage for CCE measurement for diode: " << iter->second.GetDiodeName() << "\t" << V[i] << " != " << fbias << std::endl;
-      }
-      float Q = iter->second.GetWaveIntegral(min, max);
-      float Q0 = ref.GetWaveIntegral(min, max);
-      assert(Q0!=0);
-      CCE[i]=Q/Q0;
+      CCE[i]=GetCCE(min, max, V[i]);
       i++;
       assert(i<MAX_ACQ);
     }
  
-    return new TGraph(i, V,CCE);  /// \todo check why size-1
+    TGraph *g= new TGraph(i, V,CCE);  
+    return g;
   }
   /// set the reference for CCE measurement
-  void SetReference(const TCTmeasurements& reference){assert(&reference!=NULL); _reference=&reference;}; 
- 
+  void SetReference(const TCTmeasurements& reference, std::string type){assert(&reference!=NULL); _reference=&reference; _referenceType=type;}; 
+  const TCTmeasurements* GetReference(void){return _reference;};
+  std::string GetReferenceType(void){return _referenceType;};
+
   /// set the baseline
   void SetBaseline(const TCTmeasurements& baseline){ _baseline=&baseline;};
 
@@ -280,6 +317,7 @@ class TCTmeasurements{
   //bool _checkBias; // operatations are not meant to be done as function of the bias voltage
   bool _isAverage;
   const TCTmeasurements *_reference, *_baseline;
+  std::string _referenceType;
   //TCTmeasurements &_baseline;
   
 

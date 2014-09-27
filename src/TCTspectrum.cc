@@ -56,7 +56,7 @@ TGraph *TCTspectrum::GetWaveForm(std::string graphName, std::string graphTitle) 
   graph->SetFillColor(0);
   graph->Draw("A");
   graph->GetXaxis()->SetTitle("time [s]");
-  graph->GetYaxis()->SetTitle("Signal [V]");
+  graph->GetYaxis()->SetTitle("I [A]");
 
   return graph;
 }
