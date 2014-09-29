@@ -63,7 +63,11 @@ class CVimport{
     CVmeasurement meas;
     
     std::ifstream f(filename.c_str());
-    assert(f.good()); /// 
+    if(!f.good()){
+      std::cerr << "[ERROR] File " << filename << " not readable" << std::endl;
+      exit(1);
+    }
+    
     
 
     std::getline(f,line); // first line of header

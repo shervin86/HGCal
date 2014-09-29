@@ -17,8 +17,9 @@
 /** \class CVmeasurement CVmeasurement.h include/CVmeasurement.h
 * This class provides the high level informations
 */
-#define MAX_ACQ 100
+
 class CVmeasurement{
+  //#define MAX_FREQ 100
 #define MAX_SAMPLES 500
 #define MAX_FREQ 10
  public:
@@ -30,6 +31,34 @@ class CVmeasurement{
   _nSamples(0){
     SetPaletteColor(NULL,0);
   }; 
+
+  //copy constructor
+  CVmeasurement(const CVmeasurement& other){
+    _diodeName=other._diodeName;
+    _time=other._time;
+    _annealing=other._annealing;
+    
+    _nSamples=other._nSamples;
+    SetFreq(other._freq);
+
+    for(unsigned int iFreq=0; iFreq<_freq.size(); iFreq++){
+      for(unsigned int i=0; i<_nSamples; i++){
+      _bias[iFreq][i]=other._bias[iFreq][i];
+      _current[iFreq][i]=other._current[iFreq][i];
+      _guardCurrent[iFreq][i]=other._guardCurrent[iFreq][i];
+      }
+    }
+  
+    __current.insert(other.__current.begin(), other.__current.end());
+    __guardCurrent.insert(other.__guardCurrent.begin(), other.__guardCurrent.end());
+    _temperature=other._temperature;
+    _Vdep=other._Vdep;
+    _Cend=other._Cend;
+    _CendError=other._CendError;
+    for(unsigned int i=0; i < 50; i++) fPaletteColor[i]=other.fPaletteColor[i];
+  }
+
+
   ~CVmeasurement(){
     //for(unsigned int i=0; i < _freq.size(); i++){
     //  delete _bias[i];
@@ -41,16 +70,16 @@ class CVmeasurement{
       fPaletteColor[0]=50;
       size++;
     } else{
-      if(size>MAX_ACQ){
-	std::cerr << "[WARNING] Maximum number of colors shoud be < MAX_ACQ = " << MAX_ACQ << std::endl;
-	std::cerr << "          Ignoring colors after MAX_ACQ" << std::endl;
-	size=MAX_ACQ;
+      if(size>MAX_FREQ){
+	std::cerr << "[WARNING] Maximum number of colors shoud be < MAX_FREQ = " << MAX_FREQ << std::endl;
+	std::cerr << "          Ignoring colors after MAX_FREQ" << std::endl;
+	size=MAX_FREQ;
       }
       for(unsigned int i=0; i < size; i++){
 	fPaletteColor[i]=palette[i];
       }
     }
-    for(unsigned int i=size; i < MAX_ACQ; i++){
+    for(unsigned int i=size; i < MAX_FREQ; i++){
       fPaletteColor[i]=fPaletteColor[i-1]+1;
     }
   }
@@ -70,7 +99,7 @@ class CVmeasurement{
   inline void SetTemperature(float temperature){ _temperature=temperature; };  
 
   /// set the list of frequencies
-  inline void SetFreq(std::vector<std::string>& freq){ _freq = freq; 
+  inline void SetFreq(const std::vector<std::string>& freq){ _freq = freq; 
     for(unsigned int i=0; i < freq.size(); i++){
       float *b = new float[MAX_SAMPLES];
       float *c = new float[MAX_SAMPLES];
@@ -93,8 +122,20 @@ class CVmeasurement{
     _bias[iFreq][_nSamples]=bias; // add the new value and then increment the counter
     _current[iFreq][_nSamples]=current; // add the new value and then increment the counter
     _guardCurrent[iFreq][_nSamples]=guardCurrent; // add the new value and then increment the counter
+
+    float fbias=fabs(bias);
+    if(__current.count(fbias)==0){
+      __current[fbias]=std::vector<float>();
+      __guardCurrent[fbias]=std::vector<float>();
+    }
+    assert(__current[fbias].size()!=iFreq+1);
+    __current[fbias].push_back(current);
+    __guardCurrent[fbias].push_back(current);
+ 
     //std::cout << "* " << _bias[iFreq][_nSamples] << "\t" << _current[iFreq][_nSamples] << "\t" << std::endl;
     if(iFreq==_freq.size()-1) _nSamples++; // increment only once
+
+    
   };
 
 
@@ -204,11 +245,7 @@ class CVmeasurement{
   }
 
   unsigned int RefFreqIndex(void){
-    float fmax=0;
-    unsigned int imax=0;
-
     for(unsigned int i = 0; i < _freq.size(); i++){
-  
       TString s=_freq[i].c_str();
       s.ReplaceAll("Hz","");
       s.ReplaceAll(" ","");
@@ -225,6 +262,40 @@ class CVmeasurement{
   float GetCend(int iFreq=-1){ if(iFreq<0) iFreq=MaxFreqIndex(); return _Cend_vec[iFreq];};
   float GetCendError(int iFreq=-1){ if(iFreq<0) iFreq=MaxFreqIndex(); return _CendError_vec[iFreq];};
 
+    ///\name iterators 
+  /// currents are ordered by bias voltage applied (absolute value) \n
+  ///  \code auto itr=begin(); 
+  /// float fbias=itr->first; 
+  /// float current = itr->second; \endcode
+  /// @{
+  typedef std::map<float, std::vector<float> > valueMap_t;
+  typedef valueMap_t::const_iterator  const_iterator;
+  typedef valueMap_t::iterator        iterator;
+
+  const_iterator begin()const{return __current.begin();}; 
+  const_iterator end()const{  return __current.end();  };
+  iterator       begin(){     return __current.begin();};
+  iterator       end(){       return __current.end();  };
+
+  /// return iterator to the spectrum with given bias voltage (absolute value), or to end()
+  const_iterator operator[](float bias) const{
+    float fbias=fabs(bias);
+    auto iter = (__current.upper_bound(fbias));
+    if(iter==begin()) return end();
+    iter--;
+    if(fabs(iter->first-fbias)<1e-2) return iter;
+    return end();
+  }
+  iterator operator[](float bias){
+    float fbias=fabs(bias);
+    auto iter = (__current.upper_bound(fbias));
+    if(iter==begin()) return end();
+    iter--;
+    if(fabs(iter->first-fbias)<1e-2) return iter;
+    return end();
+  }
+  ///@}
+    
  protected:
   std::string _diodeName;       ///< code of the diode
   std::string _time;            ///< date of acquisition
@@ -234,6 +305,9 @@ class CVmeasurement{
   std::vector<float*> _current; ///< 
   std::vector<float*> _guardCurrent; ///< 
   
+  valueMap_t __current;
+  valueMap_t __guardCurrent;
+
   float _temperature; ///< temperature
   std::vector<std::string> _freq;
 

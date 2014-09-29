@@ -9,7 +9,7 @@ TCTspectrum TCTmeasurements::GetAverage(bool checkBias)const{
   meas.clear(); // reset the values
   unsigned int n=0;
   for(const_iterator itr = begin(); itr!=end(); itr++){
-    assert(!itr->second.isnull());
+    assert(!itr->second.empty());
     if(itr->first>1e-2){ // exclude the 0 bias from the average
       // if(itr->second.empty()) continue;
       // if(itr->second.GetN()!=meas.GetN()){
@@ -62,11 +62,9 @@ void TCTmeasurements::Average(std::vector<TCTmeasurements> others, bool checkBia
 
   reset(); // remove all the measurements already present
 
-    //  *this=*others.begin(); /// copy from the first measurement
-
   // merge of the measurements
   std::map<float,unsigned int> nV; 
-  for(std::vector<TCTmeasurements>::const_iterator itr = (others.begin()); // start from the second
+  for(std::vector<TCTmeasurements>::const_iterator itr = (others.begin()); // loop over measurements
       itr!=others.end();
       itr++){
 
@@ -78,7 +76,7 @@ void TCTmeasurements::Average(std::vector<TCTmeasurements> others, bool checkBia
 	std::cerr << "[ERROR] No samples in this spectrum, skipping: " << sp_itr->first <<" " << sp_itr->second.GetDiodeName() << std::endl;
 	continue;
       }
-      if(spec_itr==end()){
+      if(spec_itr==end()){ //if not found, there is a new spectrum
 	auto sp2_itr=sp_itr;
 	sp2_itr++;
 	acquisition.insert(sp_itr, sp2_itr);
@@ -92,18 +90,21 @@ void TCTmeasurements::Average(std::vector<TCTmeasurements> others, bool checkBia
 	auto nV_itr=nV.begin();
 	
 	unsigned int index=0;
-	while(spec2_itr==spec_itr){
+	while(spec2_itr!=spec_itr){
 	  spec2_itr++;
 	  index++;
 	}
 	
-	// std::cout << index << "\t bias="  << bias << "\t" 
-	// 	  << (*this)[bias]->first << "\t" << spec_itr->first <<"\t" <<begin()->second.GetDiodeName() << std::endl;
 	std::advance(specRMS_itr, index);
 	std::advance(nV_itr, index);
 	spec_itr->second+=sp_itr->second; // sum the new one if found
 	//specRMS_itr->second+=sp_itr->second * sp_itr->second; // sum2
 	nV_itr->second++;
+#ifdef DEBUG
+	std::cout << index << "\t bias="  << bias << "\t" 
+	 	  << (*this)[bias]->first << "\t" << spec_itr->first <<"\t" <<begin()->second.GetDiodeName() << "\t" << nV_itr->first << "\t" << nV_itr->second << std::endl;
+#endif	
+
       }
 
     }
@@ -113,7 +114,7 @@ void TCTmeasurements::Average(std::vector<TCTmeasurements> others, bool checkBia
     auto nVitr=nV.begin();
     iterator RMSitr=acquisitionRMS.begin();
     for(iterator itr=begin() ; itr!=end(); itr++,nVitr++,RMSitr++){ 
-      assert(!itr->second.isnull());
+      assert(!itr->second.empty());
       itr->second /= nVitr->second;
       RMSitr->second = (RMSitr->second/nVitr->second - itr->second*itr->second).Sqrt(); // RMS= sqrt(x2mean-xmean*xmean)
     }
@@ -128,7 +129,7 @@ void TCTmeasurements::Average(std::vector<TCTmeasurements> others, bool checkBia
     auto nVitr=++nV.begin();
     iterator RMSitr=++acquisitionRMS.begin();
     for(iterator itr=++begin(); itr!=end(); itr++,nVitr++,RMSitr++){  // start from the second element
-      assert(!itr->second.isnull());
+      assert(!itr->second.empty());
       temp+=itr->second;
       tempRMS += itr->second*itr->second;
       n+=nVitr->second;
@@ -148,7 +149,7 @@ void TCTmeasurements::Average(std::vector<TCTmeasurements> others, bool checkBia
 
 
 TGraphErrors *TCTmeasurements::GetAverageWaveForm(std::string graphName, std::string graphTitle) const{
-  if(acquisitionAverage.isnull()){
+  if(acquisitionAverage.empty()){
     std::cerr << "[ERROR] Average spectrum not calulated yet" << std::endl;
     exit(1);
   }
@@ -163,7 +164,7 @@ TGraphErrors *TCTmeasurements::GetAverageWaveForm(std::string graphName, std::st
 
 TGraph *TCTmeasurements::GetWaveForm(const_iterator itr, std::string graphName, std::string graphTitle)const{ 
   assert(itr!=end());
-  assert(!itr->second.isnull());
+  assert(!itr->second.empty());
   return itr->second.GetWaveForm(graphName, graphTitle);
 }
 

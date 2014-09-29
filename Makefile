@@ -33,7 +33,7 @@ all: ${LIBDIR}/TCTmeasurementBase.o ${LIBDIR}/TCTmeasurements.o ${LIBDIR}/TCTimp
 
 test: ${BUILDDIR}/test.exe 
 
-${BUILDDIR}/test.exe: ${BUILDDIR}/test.cpp ${SRCDIR}/functions.cc ${INCLUDEDIR}/TCTimport.h ${LIBDIR}/TCTmeasurements.o ${LIBDIR}/configFileParser.o ${LIBDIR}/IVimport.o ${LIBDIR}/IVmeasurement.o ${LIBDIR}/CVimport.o ${LIBDIR}/CVmeasurement.o
+${BUILDDIR}/test.exe: ${BUILDDIR}/test.cpp ${SRCDIR}/functions.cc ${INCLUDEDIR}/TCTimport.h ${LIBDIR}/TCTmeasurements.o ${LIBDIR}/configFileParser.o ${LIBDIR}/IVimport.o ${LIBDIR}/IVmeasurement.o ${LIBDIR}/CVimport.o ${LIBDIR}/CVmeasurement.o ${LIBDIR}/diode.o
 	@echo "-> Making test program"
 	@g++ ${OPT} -Wunused-value -Wunused-variable ${INCLUDE} ${LIB} -o ${BUILDDIR}/test.exe ${BUILDDIR}/test.cpp ${LIBDIR}/*.o
 
@@ -66,6 +66,11 @@ ${LIBDIR}/CVmeasurement.o: ${INCLUDEDIR}/CVmeasurement.h ${SRCDIR}/CVmeasurement
 
 ${LIBDIR}/CVimport.o: ${INCLUDEDIR}/CVimport.h ${SRCDIR}/CVimport.cc ${INCLUDEDIR}/CVmeasurement.h
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/CVimport.o ${SRCDIR}/CVimport.cc
+
+diode: ${LIBDIR}/diode.o
+${LIBDIR}/diode.o: ${INCLUDEDIR}/diode.h ${SRCDIR}/diode.cc ${INCLUDEDIR}/CVmeasurement.h ${INCLUDEDIR}/IVmeasurement.h ${INCLUDEDIR}/TCTmeasurements.h
+	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/diode.o ${SRCDIR}/diode.cc
+
 
 link: 
 	@./linkdef.sh

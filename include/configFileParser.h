@@ -21,6 +21,24 @@ class configFileContent{
      - irrX: irradiated diode
      - X: index
   */
+
+ configFileContent(void): 
+  type("nan"),
+    diodeName("nan"),
+    irradiation("nan"),
+    temp("nan"),
+    TCTdate("nan"),
+    TCTreference("nan"),
+    TCTbaseline("nan"),
+    IVdate("nan"),
+    CVdate("nan"),
+    Vdep_CV(0.), Vdep_CVerror(0.),
+    Vdep_IV(0.), Vdep_IVerror(0.),
+    Vdep_TCT(0.),
+    CCE(0.), 
+    Irev(0.), IrevError(0.),
+    Cend(0.), CendError(0.){};
+  
   std::string type, ///< type of measurement
     diodeName, ///< name of the diode 
     irradiation, ///< fluence
@@ -43,6 +61,18 @@ class configFileContent{
     Cend, CendError;
   
  public:
+  
+  inline std::string GetLegend() const{
+    std::string legend;
+    legend+=GetThickness();
+    legend+=" um, ";
+    legend+=irradiation;
+    legend+=" cm^{-2}, ";
+    legend+=GetTemperatureString();
+    legend+=" C";
+    return legend;
+  }
+
   inline std::string GetThickness() const{ 
     std::string thickness= diodeName.substr(2,3);
     return thickness;
@@ -55,6 +85,7 @@ class configFileContent{
   inline std::string GetBaseline(void)const{ return TCTbaseline;};
   inline float GetTemperature(void)const{ return std::stof(temp);};
   inline std::string GetTemperatureString(void)const{ return temp;};
+  inline std::string GetFluence(void)const{ return irradiation;};
 
   configFileContent& operator<<(std::ostream& f){
     f << type << "\t" << diodeName << "\t" << irradiation << "\t" << GetThickness() << "\t" << GetTemperature()
@@ -162,7 +193,39 @@ irr1	FZ320P_01_DiodeL_11    4e14		-20		21/08/2014-16:26	ref1		bas1		-      -
 class configFileParser{
 
  public:
+  /// \name iterators
+  /// @{
+  
   typedef std::multimap<std::string, configFileContent> lines_t; ///< each line of the config file, the first column (type) is the index
+
+  /// iterator to the lines of the config file
+  typedef lines_t::const_iterator  const_iterator;
+  typedef lines_t::iterator        iterator;
+
+  const_iterator begin()const{return lines.begin();}; 
+  const_iterator end()const{  return lines.end();  };
+  iterator       begin(){     return lines.begin();};
+  iterator       end(){       return lines.end();  };
+
+  /// return iterator to the first configFileContent line with given type
+  /* const_iterator operator[](std::string type) const{ */
+  /*   float fbias=fabs(bias); */
+  /*   auto iter = (__current.upper_bound(fbias)); */
+  /*   if(iter==begin()) return end(); */
+  /*   iter--; */
+  /*   if(fabs(iter->first-fbias)<1e-2) return iter; */
+  /*   return end(); */
+  /* } */
+  /* iterator operator[](float bias){ */
+  /*   float fbias=fabs(bias); */
+  /*   auto iter = (__current.upper_bound(fbias)); */
+  /*   if(iter==begin()) return end(); */
+  /*   iter--; */
+  /*   if(fabs(iter->first-fbias)<1e-2) return iter; */
+  /*   return end(); */
+  /* } */
+  ///@}
+
 
   configFileParser(std::string filename){
     _filename=filename;
@@ -205,7 +268,7 @@ class configFileParser{
 
   inline std::string GetLegend(std::string type) const{
     auto iter = find(type);
-
+    return iter->second.GetLegend();
     std::string legend;
     legend+=GetThickness(iter);
     legend+=" um, ";

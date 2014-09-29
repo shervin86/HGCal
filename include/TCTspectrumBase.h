@@ -20,37 +20,25 @@
       - remove assert in favor of exceptions
 */
 
-#define MAX_SAMPLES 1005
+
 class TCTspectrumBase{
+  /** 
+   *  \def MAX_SAMPLES  
+   * maximum number of points
+   */
+#define MAX_SAMPLES_SPECTRUM 1005   
+
  public:
-  /// default constructor
- TCTspectrumBase(std::string& diodeName): 
-  _diodeName(diodeName),
-  _nSamples(0)
-    {};
 
- TCTspectrumBase(const char *diodeName):
-  _diodeName(diodeName),
-  _nSamples(0)
-    {};
-
-  /// copy constructor
-  TCTspectrumBase(TCTspectrumBase const& other){
-    *this = other;
-    _diodeName     = other._diodeName;
-    _time          = other._time;
-    _annealing     = other._annealing;
-    _leakage       = other._leakage;
-    _temperature   = other._temperature;
-    _timeScanUnit  = other._timeScanUnit;
-    _bias          = other._bias;
-    _nSamples      = other._nSamples;
-    for(unsigned int i=0; i < _nSamples; i++){
-      _samples[i] = other._samples[i];
-    }
-  }
+  /// \name constructors 
+  ///@{ 
+  //constructors
+ TCTspectrumBase(std::string& diodeName): _diodeName(diodeName), _nSamples(0){} ///< default constructor  
+ TCTspectrumBase(const char  *diodeName): _diodeName(diodeName), _nSamples(0){} ///< alternative constructor
+ TCTspectrumBase(TCTspectrumBase const& other){*this = other;}  ///< copy constructor
     
-  ~TCTspectrumBase(){}
+ ~TCTspectrumBase(){};
+ ///@}
 
   /// copy content from other measurement
   inline TCTspectrumBase& operator = (const TCTspectrumBase& other){
@@ -74,6 +62,10 @@ class TCTspectrumBase{
   /*   return (f); */
   /* } */
 
+
+  ///\name Setting properties, adding info
+  ///@{ 
+
   /// Acquiition time
   inline void SetTime(std::string time){ _time = time; };
    
@@ -84,6 +76,7 @@ class TCTspectrumBase{
 
   /// acquisition temperature
   inline void SetTemperature(float temperature){ _temperature=temperature; };  
+
   ///leakage currente
   inline void SetLeakage(float leakage){ _leakage=leakage; };
 
@@ -96,11 +89,15 @@ class TCTspectrumBase{
   ///one	    value	    of	    the	    waveform,	    they	    are	    supposed	    to	    be contiguous
   inline void AddMeasurement(float sample){
     //   std::cout << _nSamples << "\t" << sample << std::endl;
-    assert(_nSamples<MAX_SAMPLES); // check that you have not reached the maximum number of samples
+    assert(_nSamples<MAX_SAMPLES_SPECTRUM); // check that you have not reached the maximum number of samples
     _samples[_nSamples++]=sample; // add the new value and then increment the counter
   };
+  ///@}
 
-  inline void AddMeasurement(float time, float sample){assert(false);}; ///not implemented
+  //inline void AddMeasurement(float time, float sample){assert(false);}; ///not implemented
+
+  /// \name Getting properties
+  ///@{
   inline std::string GetDiodeName(void) const{ return _diodeName;   };
   inline std::string GetTime(void)      const{ return _time;        };
   inline std::vector< std::pair<float, float> > GetAnnealing(void) const{ return _annealing;   };
@@ -112,6 +109,7 @@ class TCTspectrumBase{
   inline float* GetSamples(void)     { return _samples;     };
   inline const float* GetSamples(void)     const{ return _samples;     };
   inline bool empty(void) const { return (_nSamples==0);};
+  ///@}
 
  protected:
   std::string _diodeName;       ///< code of the diode
@@ -119,7 +117,7 @@ class TCTspectrumBase{
   std::vector< std::pair<float,float> > _annealing; ///< annealing: vector of (time, temperature) pairs
   float _timeScanUnit; ///< time for sampling
   unsigned int   _nSamples;     ///< number of samples
-  float _samples[MAX_SAMPLES]; ///< samples of the waveform [V]
+  float _samples[MAX_SAMPLES_SPECTRUM]; ///< samples of the waveform [V]
   float _temperature; ///< temperature
   float _leakage;     ///< leakage current
   float _bias;        ///< input voltage 

@@ -10,7 +10,7 @@
 #include "IVimport.h"
 #include "CVmeasurement.h"
 #include "CVimport.h"
-
+#include "diode.h"
 
 #include <TFile.h>
 #include <TGraphErrors.h>
@@ -326,6 +326,7 @@ int main(int argc, char **argv){
     ("help,h","Help message")
     ("CV", "do CV analysis")
     ("IV", "do IV analysis")
+    ("TCT", "do TCT analysis")
     ("checkBaselines", "do a check on the baselines for TCT")
     ("onlyBaselines", "")
     ;
@@ -525,6 +526,8 @@ int main(int argc, char **argv){
     for(CVMap_t::iterator iter = cvMap.begin();
 	iter!=cvMap.end();
 	iter++){
+
+      continue;
       std::string type=iter->first;
       CVmeasurement& cv= iter->second;
       cv.FindVdep(false);
@@ -624,25 +627,27 @@ int main(int argc, char **argv){
   }
 
   if(vm.count("TCT")){
+  std::cout << "------------------------------------------------------------\n"; 
+  std::cout << "[STATUS] TCT measurements\n" << std::endl;
 
-  // make the average over measurements of the same type
+  // make the average over measurements of the same type for the baselines
   float RMS=0.;
   for(measMap_t::iterator m_itr=baselinesMap.begin();  // loop over different baselines
       m_itr!=baselinesMap.end();
       m_itr++){
+
+    // set the palette
     for(TCTmeasurementsCollection_t::iterator v_itr=m_itr->second.begin(); // loop over measurements of the same type
 	v_itr!=m_itr->second.end();
 	v_itr++){
-      
       v_itr->SetPaletteColor(fPaletteColor, 50);
     }
+
     baselineMap[m_itr->first]=TCTmeasurements(); // declare the new baseline (will be the average)
     baselineMap[m_itr->first].Average(m_itr->second,false); // assign the average over all the measurements of the same type
   }
 
-  // procedure to check the compatiblity of the baselines
-  std::cout << "------------------------------\n"; 
-  std::cout << "[STATUS] TCT measurements\n" << std::endl;
+
 
   std::cout << "[STATUS] " << "Checking baselines compatibility" << std::endl;
   // for every baseline type make the average of all the measurements
@@ -872,8 +877,11 @@ int main(int argc, char **argv){
   SetReferences(irradiatedMap, referenceMap, parser);
   PlotCCEvsV(parser,irradiatedMap, timeMin,timeMax);
 
+
+  outFile.Close();
+
   //bias Qref Qirr CCE IV CV455 CV1MHz 
-  gnuplot(parser, referenceMap, irradiatedMap, cvMap, ivMap);
+  //  gnuplot(parser, referenceMap, irradiatedMap, cvMap, ivMap);
 
   std::cout << "------------------------------CCE at 700 V" << std::endl;
   DumpCCE(parser, irradiatedMap, 600, timeMin, timeMax);
@@ -885,8 +893,57 @@ int main(int argc, char **argv){
 
   parser.Dump();
 
+  std::ofstream f_out("test.dat");
+  std::string typeMatch="ref";
+  configFileParser::lines_t::key_type oldVal;
+  for(auto itr = parser.begin(); itr!=parser.end(); itr++){
+    if(oldVal==itr->first) continue;
+    oldVal=itr->first;
+    if(oldVal.substr(0,3)!=typeMatch) continue;	
+    std::string dir="result/"+oldVal+"/";
+    system(("[ -d "+dir+" ] || mkdir -p "+dir).c_str());
+    std::ofstream ff_out(dir+"result.dat");
+    //std::cout << itr->first << std::endl;
+//       for
+    configFileContent & p = itr->second; //
+    //    p << std::cout;
+    //    std::cout << irradiatedMap[oldVal].GetReferenceType() << std::endl;
+    auto ivItr = ivMap.find(oldVal);
+    auto cvItr = cvMap.find(oldVal);
+    
+    diode d(oldVal, p,  referenceMap[oldVal], timeMin, timeMax);
+    if(ivItr!=ivMap.end()) d.SetIV(ivItr->second); 
+    if(cvItr!=cvMap.end()) d.SetCV(cvItr->second); 
+    //diode d(p, ivMap[oldVal], cvMap[oldVal], irradiatedMap[oldVal], timeMin, timeMax);
+    d.dump(ff_out);
+    ff_out.close();
+  }
 
-  outFile.Close();
+  typeMatch="irr";
+  for(auto itr = parser.begin(); itr!=parser.end(); itr++){
+    if(oldVal==itr->first) continue;
+    oldVal=itr->first;
+    if(oldVal.substr(0,3)!=typeMatch) continue;	
+    std::string dir="result/"+oldVal+"/";
+    system(("[ -d "+dir+" ] || mkdir -p "+dir).c_str());
+    std::ofstream ff_out(dir+"result.dat");
+    //std::cout << itr->first << std::endl;
+//       for
+    configFileContent & p = itr->second; //
+    //    p << std::cout;
+    //    std::cout << irradiatedMap[oldVal].GetReferenceType() << std::endl;
+    auto ivItr = ivMap.find(oldVal);
+    auto cvItr = cvMap.find(oldVal);
+    
+    diode d(oldVal, p,  irradiatedMap[oldVal], timeMin, timeMax);
+    if(ivItr!=ivMap.end()) d.SetIV(ivItr->second); 
+    if(cvItr!=cvMap.end()) d.SetCV(cvItr->second); 
+    //diode d(p, ivMap[oldVal], cvMap[oldVal], irradiatedMap[oldVal], timeMin, timeMax);
+    d.dump(ff_out);
+    ff_out.close();
+  }
+
+  f_out.close();
     return 0;
   
 

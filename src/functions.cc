@@ -1,3 +1,22 @@
+// void gnuplot(configFileParser& parser, measurementMap_t& referenceMap, measurementMap_t& irradiatedMap, CVMap_t& cvMap, IVMap_t& ivMap){
+//   std::string type="irr";
+//   for(auto 
+// 	lines_t::key_type oldVal;
+//       for(configFileParser::lines_t::iterator itr = lines.begin();
+// 	itr!=lines.end();
+// 	itr++){
+//       if(oldVal==itr->first) continue;
+//       oldVal=itr->first;
+//       if(itr->first.substr(0,3)=!=type) continue;	
+
+//       for
+//       configFileContent & p = itr->second; //
+//       p << std::cout;
+//       std::cout << std::endl;
+//       }
+//   }
+
+// }
 
 typedef std::map<std::string, TCTmeasurements*> splitMeasurements_t;
 
@@ -73,9 +92,11 @@ bool checkCompatiblity(measMap_t &baselinesMap, std::string checkName, float& RM
   for(measurementMap_t::const_iterator itr = newBaselines.begin();
       itr!=newBaselines.end();
       itr++){
+
+    // for each baseline plot all the spectra
     TMultiGraph *allSpectra = itr->second.GetAllSpectra(itr->first+"_allSpectra",itr->first+"_allSpectra");
     allSpectra->Write();
-    //const TCTspectrum &average = itr->second.GetAverageMeasurement();
+
     TCTspectrum spec = itr->second.GetAverage();
     spec-=baselinesDiffRef.GetSpectrum(baselinesDiffRef.size()-1); // only 0 by construction
     
@@ -93,6 +114,8 @@ bool checkCompatiblity(measMap_t &baselinesMap, std::string checkName, float& RM
     returnValue = abs(mean)<rms;
     TGraph *g = spec.GetWaveForm(itr->first,itr->first);
     //std::cout << spec.GetTemperature() << std::endl;
+    g->SetLineWidth(2);
+    g->SetMarkerSize(0);
     if(spec.GetTemperature()<-25){
       g->SetLineColor(pPaletteColor[index+1]);
       gg.Add(g,"l");
@@ -111,8 +134,8 @@ bool checkCompatiblity(measMap_t &baselinesMap, std::string checkName, float& RM
   gg.Write();
 
   gg2.Draw("A");
-  //  gg2.GetXaxis()->SetTitle("time [s]");
-  //gg2.GetYaxis()->SetTitle("I [A]");
+  gg2.GetXaxis()->SetTitle("time [s]");
+  gg2.GetYaxis()->SetTitle("I [A]");
   gg2.Write();
 
   return returnValue;
@@ -122,7 +145,7 @@ bool checkCompatiblity(measMap_t &baselinesMap, std::string checkName, float& RM
 
 
 
-bool checkMeasurementBaseline(float RMS, float signalStart, measMap_t baselinesMap, std::string checkName="checkReferencesBaseline"){
+bool checkMeasurementBaseline(float RMS, float signalStart, float signalEnd, measMap_t baselinesMap, std::string checkName="checkReferencesBaseline"){
   std::cout << "------------------------------\n"
 	    << "[STATUS] Checking Measurement Baseline\n"
 	    << "         Checking if the baseline associated to a give measurement is correct:\n"
@@ -149,20 +172,24 @@ bool checkMeasurementBaseline(float RMS, float signalStart, measMap_t baselinesM
     //unsigned int i=0; //i < itr->second.size(); i++){ // loop over all bias voltages
     for(auto biter = itr->second.begin(); biter!=itr->second.end(); biter++){
       TCTspectrum& spec = biter->second;
-      if(spec.isnull()) continue; ///\todo check why
+      if(spec.empty()) continue; ///\todo check why
       
       float mean = spec.GetMean(0.,signalStart);
       float rms  = spec.GetRMS(0.,signalStart);
       unsigned int n    = spec.GetNsamples(0., signalStart);
       //      assert(n>0);
       float meanError= rms/sqrt(n);
+      // if(fabs(mean)>2*meanError){
+      // 	spec-=mean;
+      // 	mean=spec.GetMean(0.,signalStart);
+      // }
       if(rms>RMS*1.5 || (fabs(mean)>2*meanError)){
 	if(fabs(spec.GetBias())>100) returnValue=false; 
        
-	if(rms>RMS*1.5){
+	if(rms>RMS*1.5 || returnValue==false){
 	  spec.SetNoisy();
 	std::cout << std::setprecision(2) <<std::setw(9)<< itr->first << "\t" << mean << "\t+/- " << meanError
-		  << "\t" << rms << "\t" << RMS << "\t";
+		  << "\t" << rms << "\t" << RMS << "\t" << (signalEnd-signalStart)/spec.GetTimeScanUnit()*mean << "\t";
 	std::cout << "<--- " << std::setprecision(4) << spec.GetBias() << std::endl;
 	}
 	RMS+=rms;
@@ -213,12 +240,12 @@ bool checkMeasurementBaseline2(float RMS, float signalStart, measMap_t baselines
       itr!=newBaselines.end();
       itr++){
     TCTmeasurements *ref = itr->second;
-    std::cout << itr->first << "\t" << ref<< "\t" << ref->size() << std::endl;
+    //std::cout << itr->first << "\t" << ref<< "\t" << ref->size() << std::endl;
     if(ref==NULL) continue;
     for(unsigned int i=0; i < ref->size(); i++){ // loop over all bias voltages
       
       TCTspectrum& spec = ref->GetSpectrum(i);
-      std::cout << "i=" << i << "\t" << spec.GetN() << std::endl;
+      //    std::cout << "i=" << i << "\t" << spec.GetN() << std::endl;
       float mean = spec.GetMean(0.,signalStart);
       float rms  = spec.GetRMS(0.,signalStart);
       unsigned int n    = spec.GetNsamples(0., signalStart);
@@ -270,7 +297,7 @@ void SetReferences(measMap_t& irradiatedsMap, measurementMap_t& referenceMap, co
 	exit(1);
       }
       const TCTmeasurements& ref = referenceMap[basName];
-      v_itr->SetReference(ref);
+      v_itr->SetReference(ref, basName);
     }
   }
 }
@@ -287,6 +314,6 @@ void SetReferences(measurementMap_t& irradiatedsMap, measurementMap_t& reference
 	exit(1);
       }
       const TCTmeasurements& ref = referenceMap[basName];
-      v_itr->SetReference(ref);
+      v_itr->SetReference(ref, basName);
   }
 }

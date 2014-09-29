@@ -37,7 +37,10 @@ class IVimport{
 #ifdef DEBUG
     std::cout << "[STATUS] Import IV from file: " << filename << std::endl;
 #endif
-    assert(f.good()); /// 
+    if(!f.good()){
+      std::cerr << "[ERROR] File " << filename << " not readable" << std::endl;
+      exit(1);
+    }
     
 
     std::getline(f,line); // first line of header

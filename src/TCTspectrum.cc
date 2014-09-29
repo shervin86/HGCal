@@ -2,8 +2,68 @@
 #include <iostream>
 #include <TString.h>
 #include <TAxis.h>
+
+TCTspectrum TCTspectrum::operator- (const TCTspectrum& rhs) const{
+    TCTspectrum newSpectrum(*this); // copy to have the informations
+    newSpectrum.clear();            // make null the spectrum
+    const TCTspectrum& lhs = *this;
+    unsigned int nSamples=lhs.GetN();
+    assert(nSamples==rhs.GetN());
+
+    //if(nSamples == other.GetN() && GetTimeScanUnit() == other.GetTimeScanUnit()){
+    const float *samples_rhs = rhs.GetSamples();
+    const float *samples_lhs = lhs.GetSamples();
+    for(unsigned int i=0; i < nSamples; i++){
+      newSpectrum.GetSamples()[i]=samples_lhs[i]-samples_rhs[i];;
+    }
+    return newSpectrum;
+};
+
+TCTspectrum TCTspectrum::operator* (const TCTspectrum& rhs) const{
+  TCTspectrum newSpectrum(*this);
+  newSpectrum.clear();
+  const TCTspectrum& lhs = *this;
+  unsigned int nSamples=lhs.GetN();
+  assert(nSamples==rhs.GetN());
+
+  //if(nSamples == other.GetN() && GetTimeScanUnit() == other.GetTimeScanUnit()){
+  const float *samples_rhs = rhs.GetSamples();
+  const float *samples_lhs = lhs.GetSamples();
+  for(unsigned int i=0; i < nSamples; i++){
+    newSpectrum.GetSamples()[i]=samples_lhs[i]*samples_rhs[i];
+  }
+  return newSpectrum;
+};
+
+  /// \todo fixit, assert should work
+TCTspectrum& TCTspectrum::operator -= (const TCTspectrum& other){
+    unsigned int nSamples=GetN();
+    //std::cout << other.GetN() << "\t" << nSamples << std::endl;
+    //assert(nSamples == other.GetN() && GetTimeScanUnit() == other.GetTimeScanUnit());// other.GetTimeScanUnit());
+    if(nSamples == other.GetN() && GetTimeScanUnit() == other.GetTimeScanUnit()){
+      const float *samples = other.GetSamples();
+      for(unsigned int i=0; i < nSamples; i++){
+	GetSamples()[i]-=samples[i];
+      }
+      return *this;
+    }else return *this;
+  };
+
+TCTspectrum& TCTspectrum::operator += (const TCTspectrum& other){
+    unsigned int nSamples=GetN();
+    if(nSamples!=other.GetN()){
+        std::cout << "nSamples= "<<nSamples << "\t" << other.GetN() << "\t" << GetDiodeName() << std::endl;
+    }
+    assert(nSamples == other.GetN() && GetTimeScanUnit() == other.GetTimeScanUnit());// other.GetTimeScanUnit());
+    const float *samples = other.GetSamples();
+    for(unsigned int i=0; i < nSamples; i++){
+      GetSamples()[i]+=samples[i];
+    }
+    return *this;
+  };
+
 float *TCTspectrum::GetTimes(void) const{
-  float *x = new float[MAX_SAMPLES];
+  float *x = new float[MAX_SAMPLES_SPECTRUM];
 
   unsigned int nSamples = GetN();
   //std::cout << nSamples << std::endl;
@@ -30,7 +90,7 @@ TGraph *TCTspectrum::GetWaveForm(std::string graphName, std::string graphTitle) 
   
   if(graphTitle=="") graphTitle=graphName;
 
-  Float_t x[MAX_SAMPLES], y[MAX_SAMPLES];
+  Float_t x[MAX_SAMPLES_SPECTRUM], y[MAX_SAMPLES_SPECTRUM];
   const float *_y = GetSamples();
 
   unsigned int nSamples = GetN();

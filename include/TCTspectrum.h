@@ -1,4 +1,4 @@
-/// basic info from measurement
+/// Advanced class to manipulate TCT spectra
 #ifndef TCTspectrum_h
 #define TCTspectrum_h
 
@@ -15,51 +15,32 @@
 
 class TCTspectrum: public TCTspectrumBase{
  public:
- TCTspectrum(TCTspectrumBase base): TCTspectrumBase(base), _noisy(false){};
-  
- TCTspectrum(std::string diodeName): TCTspectrumBase(diodeName), _noisy(false){};
- TCTspectrum(): TCTspectrumBase("null"), _noisy(false){};
+  /// \name Constructors
+  ///@{
 
-  //
-  inline bool isnull() const{ return empty();};
-  inline bool null() const{   return empty();};
+  /// default empty constructor
+ TCTspectrum(): TCTspectrumBase("null"), _noisy(false){}; 
+ TCTspectrum(std::string diodeName): TCTspectrumBase(diodeName), _noisy(false){} ///<default constructor
+ TCTspectrum(TCTspectrumBase base): TCTspectrumBase(base), _noisy(false){} ///<copy constructor
+
+  ///@}
 
   inline void SetNoisy(){ _noisy=true;};
 
-  //  TCTspectrum& operator* (const TCTspectrum& lhs, const TCTspectrum& rhs){
-  TCTspectrum operator- (const TCTspectrum& rhs) const{
-    TCTspectrum newSpectrum(*this);
-    newSpectrum.clear();
-    const TCTspectrum& lhs = *this;
-    unsigned int nSamples=lhs.GetN();
-    assert(nSamples==rhs.GetN());
+  ///\name Operations on/between spectra
+  ///@{
 
-    //if(nSamples == other.GetN() && GetTimeScanUnit() == other.GetTimeScanUnit()){
-    const float *samples_rhs = rhs.GetSamples();
-    const float *samples_lhs = lhs.GetSamples();
-    for(unsigned int i=0; i < nSamples; i++){
-      newSpectrum.GetSamples()[i]=samples_lhs[i]-samples_rhs[i];;
-    }
-    return newSpectrum;
-  };
+  /// return spectrum difference (all acquisition data are copied from the first spectrum 
+  TCTspectrum operator- (const TCTspectrum& rhs) const;
 
-  //  TCTspectrum& operator* (const TCTspectrum& lhs, const TCTspectrum& rhs){
-  TCTspectrum operator* (const TCTspectrum& rhs) const{
-    TCTspectrum newSpectrum(*this);
-    newSpectrum.clear();
-    const TCTspectrum& lhs = *this;
-    unsigned int nSamples=lhs.GetN();
-    assert(nSamples==rhs.GetN());
+  /// return spectrum with values = product of the two spectra (all acquisition data are copied from the first spectrum
+  TCTspectrum operator* (const TCTspectrum& rhs) const;
 
-    //if(nSamples == other.GetN() && GetTimeScanUnit() == other.GetTimeScanUnit()){
-    const float *samples_rhs = rhs.GetSamples();
-    const float *samples_lhs = lhs.GetSamples();
-    for(unsigned int i=0; i < nSamples; i++){
-      newSpectrum.GetSamples()[i]=samples_lhs[i]*samples_rhs[i];
-      //      std::cout << samples_rhs[i] << "\t" << samples_lhs[i] << "\t" << newSpectrum.GetSamples()[i] << std::endl; 
-    }
-    return newSpectrum;
-  };
+  /// 
+  TCTspectrum& operator -= (const TCTspectrum& other);
+
+  ///
+  TCTspectrum& operator += (const TCTspectrum& other);
 
   TCTspectrum& Sqrt(void){
     unsigned int nSamples=this->GetN();
@@ -70,8 +51,12 @@ class TCTspectrum: public TCTspectrumBase{
     }
     return *this;
   };
-    
 
+  ///@}
+
+
+  ///\name Operations with constant values, all samples are modified by the same value
+  ///@{
   TCTspectrum operator/ (double value) const{
     TCTspectrum newSpectrum(*this);
     const TCTspectrum& lhs = *this;
@@ -96,34 +81,6 @@ class TCTspectrum: public TCTspectrumBase{
     return *this;
   };
 
-  /// \todo fixit, assert should work
-  TCTspectrum& operator -= (const TCTspectrum& other){
-    unsigned int nSamples=GetN();
-    //std::cout << other.GetN() << "\t" << nSamples << std::endl;
-    //assert(nSamples == other.GetN() && GetTimeScanUnit() == other.GetTimeScanUnit());// other.GetTimeScanUnit());
-    if(nSamples == other.GetN() && GetTimeScanUnit() == other.GetTimeScanUnit()){
-      const float *samples = other.GetSamples();
-      for(unsigned int i=0; i < nSamples; i++){
-	GetSamples()[i]-=samples[i];
-      }
-      return *this;
-    }else return *this;
-  };
-
-
-  TCTspectrum& operator += (const TCTspectrum& other){
-    unsigned int nSamples=GetN();
-    if(nSamples!=other.GetN()){
-      std::cout << "nSamples= "<<nSamples << "\t" << other.GetN() << "\t" << GetDiodeName() << std::endl;
-    }
-    assert(nSamples == other.GetN() && GetTimeScanUnit() == other.GetTimeScanUnit());// other.GetTimeScanUnit());
-    const float *samples = other.GetSamples();
-    for(unsigned int i=0; i < nSamples; i++){
-      GetSamples()[i]+=samples[i];
-    }
-    return *this;
-  };
-
   TCTspectrum& operator /= (const float scale){
     unsigned int nSamples=GetN();
     //assert(nSamples == other.GetN() && GetTimeScanUnit() == 1);// other.GetTimeScanUnit());
@@ -134,15 +91,19 @@ class TCTspectrum: public TCTspectrumBase{
     return *this;
   };
 
+
+  /// assign the same value to all the samples, used to make it =0
   TCTspectrum& operator = (const float scale){
     unsigned int nSamples=GetN();
-    //assert(nSamples == other.GetN() && GetTimeScanUnit() == 1);// other.GetTimeScanUnit());
-    //const float *samples = other.GetSamples();
     for(unsigned int i=0; i < nSamples; i++){
       GetSamples()[i]=scale;
     }
     return *this;
   };
+
+  ///@}
+
+  float *GetTimes(void)const; ///< return array with x axis of spectra (time [s])
 
   float GetMean(float start, float end) const{
     unsigned int nSamples=GetN(), jSamples=0;
@@ -190,13 +151,12 @@ class TCTspectrum: public TCTspectrumBase{
   }
 
   /// reset the spectrum to 0 (conserve the number of samples)
-  void clear(void){
-    *this = 0;
-  };
+  void clear(void){*this = 0;};
   
   TGraph *GetWaveForm(std::string graphName="Graph", std::string graphTitle="graph") const;
-  float *GetTimes(void)const;
 
+
+  /// make the intregral between min and max [s] and subtract a constant value baselineMean from each sample
   float GetWaveIntegral(float min, float max, float baselineMean=0.) const{
     if(GetN()<=0){
       std::cerr << "[ERROR] No points for this spectrum: " << GetDiodeName() << "\t" << GetBias() << std::endl;
@@ -204,10 +164,10 @@ class TCTspectrum: public TCTspectrumBase{
     }
     assert(min<max);
     assert(min<_timeScanUnit*GetN());
-    
+
     float integral=0.;
     unsigned int binMax=(unsigned int)(max/_timeScanUnit);
-    //std::cout << binMax << "\t" << GetN() << "\t" << _timeScanUnit << "\t" << max << std::endl;
+    //    std::cout << binMax << "\t" << GetN() << "\t" << _timeScanUnit << "\t" << max << "\t" << max-min << std::endl;
     if(binMax>GetN()) binMax=GetN();
 
  //unsigned int binMin=(unsigned int)(min/_timeScanUnit);

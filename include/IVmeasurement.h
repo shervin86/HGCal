@@ -18,11 +18,34 @@
 
 class IVmeasurement{
 #define MAX_SAMPLES 500
-
+  
  public:
   /// base constructor
  IVmeasurement(): _nSamples(0), _IVgraph(NULL){}; 
+    
 
+  //copy constructor
+  IVmeasurement(const IVmeasurement& other){
+    _diodeName=other._diodeName;
+    _time=other._time;
+    _annealing=other._annealing;
+    
+    _nSamples=other._nSamples;
+    _IVgraph= NULL;
+
+    for(unsigned int i=0; i<_nSamples; i++){
+      _bias[i]=other._bias[i];
+      _current[i]=other._current[i];
+      _guardCurrent[i]=other._guardCurrent[i];
+    }
+  
+    __current.insert(other.__current.begin(), other.__current.end());
+    __guardCurrent.insert(other.__guardCurrent.begin(), other.__guardCurrent.end());
+    _temperature=other._temperature;
+    _Vdep=other._Vdep;
+    _Irev=other._Irev;
+    _IrevError=other._IrevError;
+  }
 
   /// DiodeName
   inline void SetDiodeName(std::string name){ _diodeName = name;};
@@ -170,24 +193,58 @@ class IVmeasurement{
   inline float GetIrev(void) const{ return _Irev; };
   inline float GetIrevError(void) const{ return _IrevError; };
 
+    ///\name iterators 
+  /// currents are ordered by bias voltage applied (absolute value) \n
+  ///  \code auto itr=begin(); 
+  /// float fbias=itr->first; 
+  /// float current = itr->second; \endcode
+  /// @{
+  typedef std::map<float, float> valueMap_t;
+  typedef valueMap_t::const_iterator  const_iterator;
+  typedef valueMap_t::iterator        iterator;
 
+  const_iterator begin()const{return __current.begin();}; 
+  const_iterator end()const{  return __current.end();  };
+  iterator       begin(){     return __current.begin();};
+  iterator       end(){       return __current.end();  };
+
+  /// return iterator to the spectrum with given bias voltage (absolute value), or to end()
+  const_iterator operator[](float bias) const{
+    float fbias=fabs(bias);
+    auto iter = (__current.upper_bound(fbias));
+    if(iter==begin()) return end();
+    iter--;
+    if(fabs(iter->first-fbias)<1e-2) return iter;
+    return end();
+  }
+  iterator operator[](float bias){
+    float fbias=fabs(bias);
+    auto iter = (__current.upper_bound(fbias));
+    if(iter==begin()) return end();
+    iter--;
+    if(fabs(iter->first-fbias)<1e-2) return iter;
+    return end();
+  }
+  ///@}
+    
  protected:
   std::string _diodeName;       ///< code of the diode
   std::string _time;            ///< date of acquisition
   std::vector< std::pair<float,float> > _annealing; ///< annealing: vector of (time, temperature) pairs
   unsigned int   _nSamples;     ///< number of samples
-  float _bias[MAX_SAMPLES]; ///< 
-  float _current[MAX_SAMPLES]; ///< 
-  float _guardCurrent[MAX_SAMPLES]; ///< 
+  float _bias[MAX_SAMPLES]; ///< original measurement values
+  float _current[MAX_SAMPLES]; ///< original measurement values
+  float _guardCurrent[MAX_SAMPLES]; ///< original measurement values
 
-  std::map<float, float> __current;
-  std::map<float, float> __guardCurrent;
+  valueMap_t __current;
+  valueMap_t __guardCurrent;
 
   float _temperature; ///< temperature
 
   TGraph *_IVgraph;        ///< IV plot
   float _Vdep;             ///< depletion voltage
   float _Irev, _IrevError; ///< leakage current and uncertainty
+
 };
 
 
