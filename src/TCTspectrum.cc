@@ -58,6 +58,7 @@ TCTspectrum& TCTspectrum::operator += (const TCTspectrum& other){
     const float *samples = other.GetSamples();
     for(unsigned int i=0; i < nSamples; i++){
       GetSamples()[i]+=samples[i];
+      
     }
     return *this;
   };
@@ -120,4 +121,25 @@ TGraph *TCTspectrum::GetWaveForm(std::string graphName, std::string graphTitle) 
 
   return graph;
 }
+
+
+float TCTspectrum::GetWaveIntegral(float min, float max, float baselineMean) const{
+    if(GetN()<=0){
+      std::cerr << "[ERROR] No points for this spectrum: " << GetDiodeName() << "\t" << GetBias() << std::endl;
+      assert(GetN()>0);
+    }
+    assert(min<max);
+    assert(min<_timeScanUnit*GetN());
+
+    float integral=0.;
+    unsigned int binMax=(unsigned int)(max/_timeScanUnit);
+    //    std::cout << binMax << "\t" << GetN() << "\t" << _timeScanUnit << "\t" << max << "\t" << max-min << std::endl;
+    if(binMax>GetN()) binMax=GetN();
+
+    for(unsigned int i=(unsigned int)(min/_timeScanUnit); i < binMax; i++){
+      //std::cout << "integral = " << integral << "\t" << i << "\t" << _samples[i] << std::endl;
+      integral += _samples[i]-baselineMean;
+    }
+    return integral*_timeScanUnit;
+  };
 

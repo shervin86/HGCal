@@ -333,6 +333,7 @@ int main(int argc, char **argv){
   inputOption.add_options()
     ("baseDir,d", po::value< std::string >(&baseDir)->default_value("data/shervin"), "directory with data files")
     ("configFile,f", po::value< std::string >(&configFilename), "File with list of measurements")
+    ("type", po::value< std::vector< std::string > >, "")
     ("tctType, t", po::value<std::string >(&tctType), "Index in the config file")
     ("tctFile", po::value< std::string >(&tctFilename), "single tct file") // for single validation
     ("tctBaseline", po::value< std::vector<std::string> >(&tctBaselineFiles), "tct measurement uses ad baseline, can be called multiple times") 
@@ -344,7 +345,7 @@ int main(int argc, char **argv){
     ("outDir", po::value<std::string>(&outDir),"")
     ("imgFormat", po::value<std::string>(&imgFormat)->default_value("eps"),"")
     ("timeMin", po::value<float>(&timeMin)->default_value(0.085e-6),"")
-    ("timeMax", po::value<float>(&timeMax)->default_value(0.100e-6),"")
+    ("timeMax", po::value<float>(&timeMax)->default_value(0.096e-6),"")
     //("outFile", po::value<std::string>(&outFile),"");
     ;
   
@@ -432,6 +433,16 @@ int main(int argc, char **argv){
     multi.Add(QvsVref, "p");
     multi.Draw("A");
     multi.SaveAs("tmp/tctValidation/QvsV.root");
+
+    ofstream ff_out("result/tmp/result.dat");
+    configFileContent ;p
+    diode d("tmp", p,  tct, timeMin, timeMax);
+    //if(ivItr!=ivMap.end()) d.SetIV(ivItr->second); 
+    //if(cvItr!=cvMap.end()) d.SetCV(cvItr->second); 
+    //diode d(p, ivMap[oldVal], cvMap[oldVal], irradiatedMap[oldVal], timeMin, timeMax);
+    d.dump(ff_out);
+
+    ff_out.close();
     return 0;
     TGraph *CCEvsV = tct.GetCCEvsV(timeMin, timeMax);
     CCEvsV->SaveAs("tmp/tctValidation/CCEvsV.root");
@@ -867,8 +878,8 @@ int main(int argc, char **argv){
  //   return 1;
  //  }
 
-  std::cout << timeMin << "\t" << timeMax << "\t" <<
-    irradiatedsMap.begin()->second[0].GetSpectrum(0).GetTimeScanUnit() << "\t" << irradiatedsMap.begin()->second[0].GetSpectrum(0).GetNsamples(timeMin, timeMax) << std::endl;
+  //  std::cout << timeMin << "\t" << timeMax << "\t" <<
+  //  irradiatedsMap.begin()->second[0].GetSpectrum(0).GetTimeScanUnit() << "\t" << irradiatedsMap.begin()->second[0].GetSpectrum(0).GetNsamples(timeMin, timeMax) << std::endl;
   PlotQvsV(referenceMap, timeMin,timeMax);
   //  return 0;
   PlotQvsV(irradiatedMap, timeMin,timeMax);

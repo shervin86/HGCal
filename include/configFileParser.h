@@ -295,26 +295,30 @@ class configFileParser{
     return lines.equal_range(type).first;
   }
 
+  inline std::string GetDiodeBasename(std::string diodename){
+    return diodename.substr(0,diodename.find("_"));
+  }
+
   inline std::string GetTCTfilename(int index, std::string baseDir=""){
     auto iter = lines.begin();
     std::advance(iter,index);
     if(iter->second.TCTdate=="-") return "";
     
     if(baseDir.empty())
-      return iter->second.diodeName+"/"+iter->second.TCTdate+".mct";
+      return GetDiodeBasename(iter->second.diodeName)+"/"+iter->second.diodeName+"/"+iter->second.TCTdate+".mct";
     else 
-      return baseDir+"/"+iter->second.diodeName+"/"+iter->second.TCTdate+".mct";
+      return baseDir+"/"+GetDiodeBasename(iter->second.diodeName)+"/"+iter->second.diodeName+"/"+iter->second.TCTdate+".mct";
   }
 
   inline std::string GetIVfilename(int index, std::string baseDir=""){
     auto iter = lines.begin();
     std::advance(iter,index);
     if(iter->second.IVdate=="-") return "";
-
+    
     if(baseDir.empty())
-      return iter->second.diodeName+"/"+iter->second.diodeName+"_"+iter->second.IVdate+".iv";
+      return GetDiodeBasename(iter->second.diodeName)+"/"+iter->second.diodeName+"/"+iter->second.diodeName+"_"+iter->second.IVdate+".iv";
     else 
-      return baseDir+"/"+iter->second.diodeName+"/"+iter->second.diodeName+"_"+iter->second.IVdate+".iv";
+      return baseDir+"/"+GetDiodeBasename(iter->second.diodeName)+"/"+iter->second.diodeName+"/"+iter->second.diodeName+"_"+iter->second.IVdate+".iv";
   }
     
   inline std::string GetCVfilename(int index, std::string baseDir=""){
@@ -323,9 +327,9 @@ class configFileParser{
     if(iter->second.CVdate=="-") return "";
     
     if(baseDir.empty())
-      return iter->second.diodeName+"/"+iter->second.diodeName+"_"+iter->second.CVdate+".cv";
+      return GetDiodeBasename(iter->second.diodeName)+"/"+iter->second.diodeName+"/"+iter->second.diodeName+"_"+iter->second.CVdate+".cv";
     else 
-      return baseDir+"/"+iter->second.diodeName+"/"+iter->second.diodeName+"_"+iter->second.CVdate+".cv";
+      return baseDir+"/"+GetDiodeBasename(iter->second.diodeName)+"/"+iter->second.diodeName+"/"+iter->second.diodeName+"_"+iter->second.CVdate+".cv";
   }
     
   /* inline std::string GetTCTreferenceFilename(int index, std::string baseDir=""){ */

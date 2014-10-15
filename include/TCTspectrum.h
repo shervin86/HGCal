@@ -30,18 +30,19 @@ class TCTspectrum: public TCTspectrumBase{
   ///\name Operations on/between spectra
   ///@{
 
-  /// return spectrum difference (all acquisition data are copied from the first spectrum 
+  /// return spectrum difference (all acquisition data are copied from the first spectrum)
   TCTspectrum operator- (const TCTspectrum& rhs) const;
 
-  /// return spectrum with values = product of the two spectra (all acquisition data are copied from the first spectrum
+  /// return spectrum with values = product of the two spectra (all acquisition data are copied from the first spectrum)
   TCTspectrum operator* (const TCTspectrum& rhs) const;
 
-  /// 
+  /// used to subtract baseline
   TCTspectrum& operator -= (const TCTspectrum& other);
 
-  ///
+  /// used to make the average of spectra
   TCTspectrum& operator += (const TCTspectrum& other);
 
+  /// used when calculating standard deviation: each value is v[i]=sqrt(v[i])
   TCTspectrum& Sqrt(void){
     unsigned int nSamples=this->GetN();
     
@@ -103,28 +104,29 @@ class TCTspectrum: public TCTspectrumBase{
 
   ///@}
 
+  //------------------------------
+  ///\name Spectrum information 
+  ///@{
   float *GetTimes(void)const; ///< return array with x axis of spectra (time [s])
 
-  float GetMean(float start, float end) const{
+  /// returns the average value in the time interval [start:stop]
+  float GetMean(const float start, const float end) const{
     unsigned int nSamples=GetN(), jSamples=0;
     float mean=0;
-    //assert(nSamples == other.GetN() && GetTimeScanUnit() == 1);// other.GetTimeScanUnit());
-    //const float *samples = other.GetSamples();
-    float t=start;
-    float dt=GetTimeScanUnit();
-    
+    float t=start, dt=GetTimeScanUnit();
+    const float *samples = GetSamples();
     for(unsigned int i=(unsigned int) (start/dt); i < nSamples && t<end; i++, t+=dt){
-      mean+=GetSamples()[i];
-      jSamples++;
+      mean+=samples[i];
+      jSamples++; // count number of points
     }
     mean/=jSamples;
     return mean;
   }
 
+  /// returns the number of points in a give time interval [start:end]
   unsigned int GetNsamples(float start, float end) const{
     unsigned int nSamples=GetN(), jSamples=0;
-    float t=start;
-    float dt=GetTimeScanUnit();
+    float t=start, dt=GetTimeScanUnit();
     
     for(unsigned int i=(unsigned int) (start/dt); i < nSamples && t<end; i++, t+=dt){
       jSamples++;
@@ -132,6 +134,7 @@ class TCTspectrum: public TCTspectrumBase{
     return jSamples;
   }
     
+  /// returns the standard deviation of the values in the time interval [start:end]
   float GetRMS(float start, float end) const{
     unsigned int nSamples=GetN();
     float sum=0., sum2=0.;
@@ -150,34 +153,17 @@ class TCTspectrum: public TCTspectrumBase{
     return sqrt(sum2/jSamples -mean*mean);
   }
 
-  /// reset the spectrum to 0 (conserve the number of samples)
+  /// reset the spectrum to 0 (conserve the number of samples), all values are 0
   void clear(void){*this = 0;};
   
+  /// return a TGraph with the spectrum
   TGraph *GetWaveForm(std::string graphName="Graph", std::string graphTitle="graph") const;
 
 
   /// make the intregral between min and max [s] and subtract a constant value baselineMean from each sample
-  float GetWaveIntegral(float min, float max, float baselineMean=0.) const{
-    if(GetN()<=0){
-      std::cerr << "[ERROR] No points for this spectrum: " << GetDiodeName() << "\t" << GetBias() << std::endl;
-      assert(GetN()>0);
-    }
-    assert(min<max);
-    assert(min<_timeScanUnit*GetN());
+  float GetWaveIntegral(float min, float max, float baselineMean=0.) const;
+  ///@}
 
-    float integral=0.;
-    unsigned int binMax=(unsigned int)(max/_timeScanUnit);
-    //    std::cout << binMax << "\t" << GetN() << "\t" << _timeScanUnit << "\t" << max << "\t" << max-min << std::endl;
-    if(binMax>GetN()) binMax=GetN();
-
- //unsigned int binMin=(unsigned int)(min/_timeScanUnit);
-    
-    for(unsigned int i=(unsigned int)(min/_timeScanUnit); i < binMax; i++){
-      //std::cout << "integral = " << integral << "\t" << i << "\t" << _samples[i] << std::endl;
-      integral += _samples[i]-baselineMean;
-    }
-    return integral*_timeScanUnit;
-  };
  private:
   bool _noisy;
   

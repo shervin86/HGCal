@@ -33,7 +33,7 @@ all: ${LIBDIR}/TCTmeasurementBase.o ${LIBDIR}/TCTmeasurements.o ${LIBDIR}/TCTimp
 
 test: ${BUILDDIR}/test.exe 
 
-${BUILDDIR}/test.exe: ${BUILDDIR}/test.cpp ${SRCDIR}/functions.cc ${INCLUDEDIR}/TCTimport.h ${LIBDIR}/TCTmeasurements.o ${LIBDIR}/configFileParser.o ${LIBDIR}/IVimport.o ${LIBDIR}/IVmeasurement.o ${LIBDIR}/CVimport.o ${LIBDIR}/CVmeasurement.o ${LIBDIR}/diode.o
+${BUILDDIR}/test.exe: ${BUILDDIR}/test.cpp ${SRCDIR}/functions.cc ${LIBDIR}/TCTimport.o ${LIBDIR}/TCTmeasurements.o ${LIBDIR}/configFileParser.o ${LIBDIR}/IVimport.o ${LIBDIR}/IVmeasurement.o ${LIBDIR}/CVimport.o ${LIBDIR}/CVmeasurement.o ${LIBDIR}/diode.o
 	@echo "-> Making test program"
 	@g++ ${OPT} -Wunused-value -Wunused-variable ${INCLUDE} ${LIB} -o ${BUILDDIR}/test.exe ${BUILDDIR}/test.cpp ${LIBDIR}/*.o
 
@@ -45,8 +45,8 @@ ${LIBDIR}/TCTspectrum.o: ${INCLUDEDIR}/TCTspectrum.h ${SRCDIR}/TCTspectrum.cc ${
 	@echo "-> Making TCTspectrum"
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTspectrum.o ${SRCDIR}/TCTspectrum.cc
 
-${LIBDIR}/TCTimport.o: include/TCTimport.h ${INCLUDEDIR}/TCTmeasurement.h
-	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTimport.o include/TCTimport.h
+${LIBDIR}/TCTimport.o: include/TCTimport.h ${SRCDIR}/TCTimport.cc ${INCLUDEDIR}/TCTmeasurements.h
+	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTimport.o ${SRCDIR}/TCTimport.cc
 
 ${LIBDIR}/TCTmeasurements.o: ${INCLUDEDIR}/TCTmeasurements.h ${SRCDIR}/TCTmeasurements.cc ${LIBDIR}/TCTspectrum.o 
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTmeasurements.o ${SRCDIR}/TCTmeasurements.cc

@@ -18,6 +18,7 @@
       - add the type of irradiation: unirradiate, neutron, other
       - add the type of illumination: red laser, IR laser, beta, alfa
       - remove assert in favor of exceptions
+      - implement the leakage current (also in TCTimport)
 */
 
 
@@ -33,8 +34,8 @@ class TCTspectrumBase{
   /// \name constructors 
   ///@{ 
   //constructors
- TCTspectrumBase(std::string& diodeName): _diodeName(diodeName), _nSamples(0){} ///< default constructor  
- TCTspectrumBase(const char  *diodeName): _diodeName(diodeName), _nSamples(0){} ///< alternative constructor
+ TCTspectrumBase(std::string diodeName): _diodeName(diodeName), _nSamples(0){} ///< default constructor  
+  // TCTspectrumBase(const char  *diodeName): _diodeName(diodeName), _nSamples(0){} ///< alternative constructor
  TCTspectrumBase(TCTspectrumBase const& other){*this = other;}  ///< copy constructor
     
  ~TCTspectrumBase(){};

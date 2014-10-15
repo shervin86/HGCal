@@ -92,7 +92,7 @@ bool checkCompatiblity(measMap_t &baselinesMap, std::string checkName, float& RM
   for(measurementMap_t::const_iterator itr = newBaselines.begin();
       itr!=newBaselines.end();
       itr++){
-
+    
     // for each baseline plot all the spectra
     TMultiGraph *allSpectra = itr->second.GetAllSpectra(itr->first+"_allSpectra",itr->first+"_allSpectra");
     allSpectra->Write();
@@ -114,6 +114,7 @@ bool checkCompatiblity(measMap_t &baselinesMap, std::string checkName, float& RM
     returnValue = abs(mean)<rms;
     TGraph *g = spec.GetWaveForm(itr->first,itr->first);
     //std::cout << spec.GetTemperature() << std::endl;
+
     g->SetLineWidth(2);
     g->SetMarkerSize(0);
     if(spec.GetTemperature()<-25){
@@ -128,16 +129,18 @@ bool checkCompatiblity(measMap_t &baselinesMap, std::string checkName, float& RM
   }
   RMS/=(index+index2);
   //gg.SaveAs("checkBaselines.root");
-  gg.Draw("A");
-  gg.GetXaxis()->SetTitle("time [s]");
-  gg.GetYaxis()->SetTitle("I [A]");
-  gg.Write();
-
-  gg2.Draw("A");
-  gg2.GetXaxis()->SetTitle("time [s]");
-  gg2.GetYaxis()->SetTitle("I [A]");
-  gg2.Write();
-
+  if(index>0){
+    gg.Draw("A");
+    gg.GetXaxis()->SetTitle("time [s]");
+    gg.GetYaxis()->SetTitle("I [A]");
+    gg.Write();
+  }
+  if(index2>0){
+    gg2.Draw("A");
+    gg2.GetXaxis()->SetTitle("time [s]");
+    gg2.GetYaxis()->SetTitle("I [A]");
+    gg2.Write();
+  }
   return returnValue;
 };
 
@@ -162,7 +165,7 @@ bool checkMeasurementBaseline(float RMS, float signalStart, float signalEnd, mea
   TMultiGraph gg;
   gg.SetName(checkName.c_str());
   int index=0;
-   std::cout << "Name    " << "\t" << "mean" << "\t" << "meanError" << "\t" <<"rms" << "\t" << "RMS" << std::endl;
+  std::cout << "Name    " << "\t" << "mean" << "\t" << "meanError" << "\t" <<"rms" << "\t" << "RMS" << std::endl;
   for(measurementMap_t::iterator itr = newBaselines.begin();
       itr!=newBaselines.end();
       itr++){
@@ -186,13 +189,14 @@ bool checkMeasurementBaseline(float RMS, float signalStart, float signalEnd, mea
       if(rms>RMS*1.5 || (fabs(mean)>2*meanError)){
 	if(fabs(spec.GetBias())>100) returnValue=false; 
        
-	if(rms>RMS*1.5 || returnValue==false){
+	if(rms>RMS*1.5){ // || returnValue==false){
 	  spec.SetNoisy();
-	std::cout << std::setprecision(2) <<std::setw(9)<< itr->first << "\t" << mean << "\t+/- " << meanError
-		  << "\t" << rms << "\t" << RMS << "\t" << (signalEnd-signalStart)/spec.GetTimeScanUnit()*mean << "\t";
-	std::cout << "<--- " << std::setprecision(4) << spec.GetBias() << std::endl;
+	  std::cout << std::setprecision(2) <<std::setw(9)
+		    << itr->first << "\t" << mean << " +/- " << meanError
+		    << "\t" << rms << "\t" << RMS 
+		    << "\t" << (signalEnd-signalStart)/spec.GetTimeScanUnit()*mean << "\t";
+	  std::cout << "<--- " << std::setprecision(4) << spec.GetBias() << std::endl;
 	}
-	RMS+=rms;
 	//TGraph *g = spec.GetWaveForm(itr->first);
 	//g->SaveAs(("tmp/"+itr->first+".root").c_str());
       }else{
@@ -213,7 +217,7 @@ bool checkMeasurementBaseline(float RMS, float signalStart, float signalEnd, mea
   }
   //RMS/=index;
   //gg.SaveAs("checkBaselines.root");
-  gg.Write();
+  if(index>0) gg.Write();
   
   return returnValue;
 }
@@ -242,9 +246,11 @@ bool checkMeasurementBaseline2(float RMS, float signalStart, measMap_t baselines
     TCTmeasurements *ref = itr->second;
     //std::cout << itr->first << "\t" << ref<< "\t" << ref->size() << std::endl;
     if(ref==NULL) continue;
-    for(unsigned int i=0; i < ref->size(); i++){ // loop over all bias voltages
+
+    for(auto biasItr = ref->begin(); biasItr!=ref->end(); biasItr++){ // loop over all bias voltages
       
-      TCTspectrum& spec = ref->GetSpectrum(i);
+      TCTspectrum& spec = biasItr->second;
+
       //    std::cout << "i=" << i << "\t" << spec.GetN() << std::endl;
       float mean = spec.GetMean(0.,signalStart);
       float rms  = spec.GetRMS(0.,signalStart);

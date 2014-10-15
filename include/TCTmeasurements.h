@@ -35,7 +35,17 @@ class TCTmeasurements{
     if(temp!=-999){
       for(auto itr=begin(); itr!=end(); itr++){
 	assert(!itr->second.empty());
-	itr->second.SetTemperature(temp);
+	float t=itr->second.GetTemperature();
+	if(t==-1111) itr->second.SetTemperature(temp);
+	continue;
+	if(fabs(t-temp)>5e-1){
+	  std::cerr << "[ERROR] Inconsistency between temperature indicated for the measurement and value registered in the mct file: " << temp << " != " << t << " " << filename << std::endl;
+	  exit(1);
+	}
+	if(fabs(t-temp)>3e-1){
+	  std::cerr << "[WARNING] Non stable temperature for the measurement: " << temp << " != " << itr->second.GetTemperature() << " " << filename << std::endl;
+	}
+	   //
       }
     }
   }

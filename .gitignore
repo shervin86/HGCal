@@ -19,3 +19,7 @@
 *.exe
 *.out
 *.app
+
+AutoDict_*
+LinkDef
+tmp/
