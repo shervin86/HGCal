@@ -1,0 +1,96 @@
+# role	diode                  irradiation	Temperature	TCTdate		reference	baseline	IVdate	     CVdate
+refP1921 FZ120P_01_DiodeL_8	-		20		-		-		-		2014-09-27_1 2014-09-27_1
+refP1922 FZ120P_01_DiodeL_8	-		20		-		-		-		2014-09-27_2 2014-09-27_2
+refP1923 FZ120P_01_DiodeL_8	-		20		-		-		-		2014-09-27_3 2014-09-27_3
+refP1924 FZ120P_01_DiodeL_8	-		0		-		-		-		2014-09-27_4 -
+#data/shervin/FZ320P_03_DiodeL_9/FZ320P_03_DiodeL_9_2014-08-21_4.iv
+#data/shervin/FZ320P_03_DiodeL_9/FZ320P_03_DiodeL_9_2014-08-21_5.iv
+#data/shervin/FZ320P_04_DiodeL_8/FZ320P_04_DiodeL_8_2014-08-21_4.iv
+#data/shervin/FZ320P_04_DiodeL_8/FZ320P_04_DiodeL_8_2014-08-21_5.iv
+# attenuator 5dB
+#------------------------------ disconnected IR-laser front
+# role	diode                  irradiation	Temperature	TCTdate			reference	baseline	IVdate CVdate
+basP1020	FZ320P_02_DiodeL_8      -		-20		21/09/2014-10:46	-		-		-      -
+#basP1030	FZ320P_02_DiodeL_8      -		-30		21/09/2014-11:12	-		-		-      - # ramp up -> strange
+basP1030	FZ320P_02_DiodeL_8      -		-30		21/09/2014-11:34	-		-		-      - # ramp down
+#------------------------------ reconnected IR-laser front
+refP1030 FZ320P_02_DiodeL_8      -		-30		21/09/2014-11:58	-		basP1030		-      -
+refP1020 FZ320P_02_DiodeL_8      -		-20		21/09/2014-12:30	-		basP1020		-      -
+#refP1021 FZ320P_02_DiodeL_8      -		20		-			-		-			2014-09-21_3 2014-09-21_3
+#refP1022 FZ320P_02_DiodeL_8      -		0		-			-		-			2014-09-21_4 2014-09-21_4
+#refP1023 FZ320P_02_DiodeL_8      -		20		-			-		-			2014-08-21_1 2014-08-21_1
+#refP1024 FZ320P_02_DiodeL_8      -		20		-			-		-			2014-08-21_2 2014-08-21_2
+#--
+irrP1030 FZ320P_03_DiodeL_9      4e14		-30		21/09/2014-13:05	refP1030	basP1030		2014-09-21_7 2014-09-21_7
+irrP1020 FZ320P_03_DiodeL_9      4e14		-20		21/09/2014-13:39	refP1020	basP1020		2014-09-21_6 2014-09-21_6
+#--
+irrP1130 FZ320P_01_DiodeL_11     4e14		-30		21/09/2014-14:29	refP1030	basP1030		2014-09-22_5 2014-09-22_5
+irrP1120 FZ320P_01_DiodeL_11     4e14		-20		21/09/2014-15:04	refP1020	basP1020		2014-09-22_4 2014-09-22_4
+#--
+irrP1230 FZ320P_04_DiodeL_8     6e14		-30		21/09/2014-15:34	refP1030	basP1030		2014-09-22_7 2014-09-22_7
+irrP1220 FZ320P_04_DiodeL_8     6e14		-20		21/09/2014-16:07	refP1020	basP1020		2014-09-22_6 2014-09-22_6
+#--
+irrP1330 FZ320P_06_DiodeL_9     6e14		-30		21/09/2014-16:49	refP1030	basP1030		2014-09-22_5 2014-09-22_5
+irrP1320 FZ320P_06_DiodeL_9     6e14		-20		21/09/2014-17:23	refP1020	basP1020		2014-09-22_4 2014-09-22_4
+#--
+#------------------------------ disconnected IR-laser front
+basP1420 FZ200P_05_DiodeL_9	-		-20		21/09/2014-17:56	-		-			-      -
+basP1430 FZ200P_05_DiodeL_9	-		-30		21/09/2014-18:21	-		-			-      -
+#------------------------------ connected IR-laser front
+refP1430 FZ200P_05_DiodeL_9	-		-30		21/09/2014-18:48	-		basP1430		-      -
+refP1420 FZ200P_05_DiodeL_9	-		-20		21/09/2014-19:12	-		basP1420		-      -
+#--
+irrP1530 FZ200P_02_DiodeL_8	1.5e15		-30		22/09/2014-00:14	refP1430	basP1430	        2014-09-22_5 2014-09-22_5
+irrP1520 FZ200P_02_DiodeL_8	1.5e15		-20		22/09/2014-00:53	refP1420	basP1420	        2014-09-22_4 2014-09-22_4
+#--
+irrP1630 FZ200P_04_DiodeL_2	1.5e15		-30		22/09/2014-01:24	refP1430	basP1430	        2014-09-29_5 -
+irrP1620 FZ200P_04_DiodeL_2	1.5e15		-20		22/09/2014-01:59	refP1420	basP1420	        2014-09-29_4 2014-09-29_4
+#--
+irrP1730 FZ200P_01_DiodeL_11	2.5e15		-30		22/09/2014-02:31	refP1430	basP1430	        -      -
+irrP1720 FZ200P_01_DiodeL_11	2.5e15		-20		22/09/2014-03:07	refP1420	basP1420	        -      -
+#--
+irrP1830 FZ200P_02_DiodeL_11	2.5e15		-30		22/09/2014-03:37	refP1430	basP1430	        2014-09-29_5  -
+irrP1820 FZ200P_02_DiodeL_11	2.5e15		-20		22/09/2014-04:12	refP1420	basP1420	        2014-09-29_4 2014-09-29_4
+#------------------------------ disconnected IR-laser front
+basP1920 FZ120P_01_DiodeL_8	-		-20		22/09/2014-11:33	-		-			-      -
+basP1930 FZ120P_01_DiodeL_8	-		-30		22/09/2014-12:03	-		-			-      -
+#------------------------------ connected IR-laser front
+refP1930 FZ120P_01_DiodeL_8	-		-30		22/09/2014-12:34	-		basP1930		-      -
+refP1920 FZ120P_01_DiodeL_8	-		-20		22/09/2014-13:06	-		basP1920		-      -
+#--
+irrP1920 FZ120P_07_DiodeL_11	6.25e15		-20		22/09/2014-13:41	refP1920	basP1920	        -      -
+irrP1930 FZ120P_07_DiodeL_11	6.25e15		-30		22/09/2014-13:59	refP1930	basP1930	        -      -
+#--
+irrP2020 FZ120P_01_DiodeL_11	6.25e15		-20		22/09/2014-14:36	refP1920	basP1920	        2014-09-28_4   2014-09-28_4
+irrP2030 FZ120P_01_DiodeL_11	6.25e15		-30		22/09/2014-14:56	refP1930	basP1930	        2014-09-28_5   2014-09-28_5
+#--
+irrP2120 FZ120P_02_Diode_1	1.00e16		-20		22/09/2014-15:44	refP1920	basP1920	        -      -
+irrP2130 FZ120P_02_Diode_1	1.00e16		-30		22/09/2014-16:07	refP1930	basP1930	       	2014-09-28_7 2014-09-28_4 # [500-1000V]
+irrP2130 FZ120P_02_Diode_1	1.00e16		-30		22/09/2014-16:22	refP1930	basP1930	        -      - # [0-500V]
+#--
+irrP2220 FZ120P_01_Diode_2	1.60e16		-20		22/09/2014-16:50	refP1920	basP1920	        2014-09-28_11 -
+irrP2230 FZ120P_01_Diode_2	1.60e16		-30		22/09/2014-17:11	refP1930	basP1930	        2014-09-28_12 2014-09-28_8
+#------------------------------ disconnected IR-laser front
+#basP2320 FZ120P_04_DiodeS_16	-	     	-20		23/09/2014-11:46	-		-		        -      -
+#basP2330 FZ120P_04_DiodeS_16	-	     	-30		23/09/2014-12:16	-		-		        -      -
+#------------------------------ connected IR-laser front
+#refP2330 FZ120P_04_DiodeS_16	-	     	-30		23/09/2014-13:07	-		bas2330		        -      -
+#refP2320 FZ120P_04_DiodeS_16	-	     	-20		23/09/2014-13:35	-		bas2320		        -      -
+#------------------------------ disconnected IR-laser front
+basP2420 FZ120P_01_DiodeL_8	-		-20		28/09/2014-13:06	-		-			-      -
+basP2430 FZ120P_01_DiodeL_8	-		-30		28/09/2014-13:38	-		-			-      -
+#------------------------------ connected IR-laser front
+refP1930 FZ120P_01_DiodeL_8	-		-30		28/09/2014-14:20	-		basP2430		-      - # pochi punti?
+refP1920 FZ120P_01_DiodeL_8	-		-20		28/09/2014-15:04	-		basP2420		-      -
+refP1930 FZ120P_01_DiodeL_8	-		-30		28/09/2014-16:13	-		basP2430		-      -
+#refP2530 FZ120P_01_DiodeL_9	-		-30		28/09/2014-17:37	-		basP2430		-      - # da controllare
+#--
+#------------------------------ disconnected IR-laser front
+basP2630 FZ120P_04_DiodeS_16	-	        -30		29/09/2014-13:52	-		-		         -     -
+#--
+refP2630 FZ120P_04_DiodeS_16	-	        -30		29/09/2014-14:24	-		basP2630		 -     -
+#--
+irrP2630 FZ120P_02_DiodeS_13	1.60e16		-30		29/09/2014-15:22	refP2630	basP2630	        2014-09-29_5 -
+irrP2620 FZ120P_02_DiodeS_13	1.60e16		-20		-			-		-			2014-09-29_4 2014-09-29_4 #no guard ring
+#--
+irrP2730 FZ120P_01_DiodeS_13	1.00e16		-30		29/09/2014-16:36	refP2630	basP2630	        -      -

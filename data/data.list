@@ -1,0 +1,180 @@
+# role	diode                  irradiation	Temperature	TCTdate		reference	baseline	IVdate	     CVdate
+cvN1920 FZ320N_04_DiodeL_5     -		20		-		-		-		2014-08-20_1 2014-09-27_1
+cvN1921 FZ320N_04_DiodeL_5     -		20		-		-		-		2014-08-20_2 2014-09-27_2
+
+
+#-------------------- 16/09/2014
+# removed attenuator of 5dB from laser
+# cooling at 0.5grad
+# 
+# measurement of the baseline at 20degree with 10 steps from 0 to -700 V
+# measurement of the baseline at 10degree with 10 steps from 0 to -700 V 
+# measurement of the baseline at -20 degree with 10 steps from 0 to -700 V
+# measurement of the baseline at -30 degree with 10 steps from 0 to -700 V
+# check the variations of the baseline as function of temperature and voltage
+# if the baselines are compatible define the correct baseline measurement and average
+#
+#
+#
+# role	diode                  irradiation	Temperature	TCTdate			reference	baseline	IVdate CVdate
+# test IV measurement, wrong number of divisions, not saved
+#refN100	FZ320N_04_DiodeL_5      -		20		-			-		-		2014-09-16_3
+#
+#------------------------------ disconnected IR-laser front
+#basN100	FZ320N_04_DiodeL_5      -		20		16/09/2014-12:20		-		-		-	- #10 steps
+#basN100	FZ320N_04_DiodeL_5      -		20		16/09/2014-14:43		-		-		-	- #10 steps
+basN102	FZ320N_04_DiodeL_5      -		-20		16/09/2014-15:02		-		-		-	- #10 steps
+basN104	FZ320N_04_DiodeL_5      -		-30		16/09/2014-15:31		-		-		-	- #10 steps
+basN104	FZ320N_04_DiodeL_5      -		-30		16/09/2014-15:49		-		-		-	- #70 steps
+#
+#------------------------------ reconnected IR-laser front
+refN105	FZ320N_04_DiodeL_5      -		-30		16/09/2014-16:54		-		basN104		-	-
+#basN105	FZ320N_04_DiodeL_5      -		-30		16/09/2014-17:17		-		-		-	- # reference, no bias voltage -> not compatible with others
+#basN107	FZ320N_04_DiodeL_5      -		-20		16/09/2014-17:24		-		-		-	- # reference, no bias voltage -> not compatible with others
+refN107	FZ320N_04_DiodeL_5      -		-20		16/09/2014-17:44		-		basN102		-	-
+##
+#
+irrN107	FZ320N_03_DiodeL_8      4e14		-20		16/09/2014-21:16		refN107		basN102	 2014-08-21_4 2014-08-21_4
+#basN108	FZ320N_03_DiodeL_8      -		-20		16/09/2014-21:48		-		-		-	- # no bias voltage
+#
+irrN109	FZ320N_03_DiodeL_8	4e14		-30		16/09/2014-22:07		refN105		basN104		2014-08-21_5 2014-08-21_5
+#basN109	FZ320N_03_DiodeL_8	-		-30		16/09/2014-22:32		-		-		-	- # no bias voltage
+#------------------------------ disconnected IR-laser front
+basN110 FZ320N_04_DiodeL_5	-	        -20		17/09/2014-11:09		-		-	        -       - # 70 steps up
+basN110 FZ320N_04_DiodeL_5	-	        -20		17/09/2014-11:31		-		-	        -       - # 70 steps down
+basN111 FZ320N_04_DiodeL_5	-	        -30		17/09/2014-12:00		-		-	        -       - # 70 steps down
+#------------------------------ connected IR-laser front
+refN111	FZ320N_04_DiodeL_5	-		-30		17/09/2014-12:24		-		basN111		-	- 
+refN110 FZ320N_04_DiodeL_5	-		-20		17/09/2014-12:47		-		basN110		-	- 
+irrN110 FZ320N_03_DiodeL_9	6e14		-20		17/09/2014-13:52		refN110		basN110		-	- 
+#basN112	FZ320N_03_DiodeL_9	6e14		-20		17/09/2014-14:10		-		-		-	- # no bias voltage
+irrN111	FZ320N_03_DiodeL_9	6e14		-30		17/09/2014-14:25		refN111		basN111		-	- 
+#------------------------------
+refN120	FZ200N_05_DiodeL_3	-		-20		17/09/2014-15:18		-		basN110	 - -
+#basN120	FZ200N_05_DiodeL_3	-		-20		17/09/2014-15:38		-		-	 - -
+refN121	FZ200N_05_DiodeL_3	-		-30		17/09/2014-15:46		-		basN111	 - - 
+#basN121	FZ200N_05_DiodeL_3	-		-30		17/09/2014-16:15		-		-	 - -
+irrN120	FZ200N_05_DiodeL_8	1.5e15		-20		17/09/2014-16:55		refN120		basN110	 - -
+#basN122	FZ200N_05_DiodeL_8	1.5e15		-20		17/09/2014-17:14		-		-	 - -
+irrN121	FZ200N_05_DiodeL_8	1.5e15		-30		17/09/2014-17:24		refN121		basN111	 - -
+irrN122	FZ200N_07_DiodeL_11	2.5e15		-20		17/09/2014-18:00		refN120		basN110	 2014-08-22_4 2014-08-22_4
+irrN123	FZ200N_07_DiodeL_11	2.5e15		-30		17/09/2014-18:35		refN121		basN123	 - -
+#------------------------------ disconnected IR-laser front
+basN123	FZ200N_07_DiodeL_11	2.5e15		-30		17/09/2014-18:49				-	 - -
+#------------------------------ 
+basN130	FZ120N_06_DiodeL_8	-		-20		18/09/2014-8:55			-		-	- -
+basN131	FZ120N_06_DiodeL_8	-		-30		18/09/2014-9:21			-		-	- -
+#------------------------------ connected IR-laser front
+refN131	FZ120N_06_DiodeL_8	-	  	-30		18/09/2014-9:45			-		basN131	- -
+refN130	FZ120N_06_DiodeL_8	-		-20		18/09/2014-10:12		-		basN130	- -
+irrN130	FZ120N_03_DiodeL_9	6.25e15		-20		18/09/2014-10:47		refN130		basN130	- -
+irrN131 FZ120N_03_DiodeL_9	6.25e15		-30		18/09/2014-11:18		refN131		basN131 - -
+irrN132 FZ120N_07_DiodeL_11	1.00e16		-20		18/09/2014-11:56		refN130		basN130	- -
+irrN133	FZ120N_07_DiodeL_11	1.00e16		-30		18/09/2014-12:13		refN131		basN131	- -
+irrN134	FZ120N_06_DiodeL_11	1.60e16		-20		18/09/2014-12:37		refN130		basN130	- -
+irrN135	FZ120N_06_DiodeL_11	1.60e16		-30		18/09/2014-14:25		refN131		basN131	- -
+#------------------------------ disconnected IR-laser front
+basN132 FZ120N_06_DiodeL_11	1.60e16		-30		18/09/2014-15:09		-		-	- -
+basN133	FZ120N_06_DiodeL_11	1.60e16		-20		18/09/2014-15:29		-		-	- -
+#------------------------------ 
+#basN140 FZ120N_03_DiodeS_13	-		-20		18/09/2014-15			-		-	- -
+#basN141 FZ120N_03_DiodeS_13	-		-30		18/09/2014-16			-		-	- -
+#refN141 FZ120N_03_DiodeS_13	-		-30		18/09/2014-16			-		-	- -
+#refN140 FZ120N_03_DiodeS_13	-		-20		18/09/2014-17			-		-	- -
+#irrN140 FZ120N_0
+#
+#
+#
+# check that the average of the baselines is the same, how much it changes
+#
+# average baseline 1mV
+# baseline oscillation within +/- 0.3mV
+# maximum difference between baselines with different bias voltage 0.1mV 
+# difference between baselines at different temperature not negligible
+# fix checkBaselines allSpectra color scheme -> done
+# why not 0 baseline at checkBaselines?
+# check how many baselines are needed to neglect noise in baseline measurements
+# check compatibility baseline with reference at 0 V
+# check compatibility of baseline at 0 V with others
+# baselines all compatible within small differences
+# baselines to be measured at 70 steps in bias voltage
+# for each measurement check compatibility of 0 V with the baseline 
+#
+# output:
+# diode thick temp basMean basRMS intStart intEnd V Q Q0 CCE VdepIV VdepTCT VdepCV
+#
+##
+#
+#
+#
+#irrN100	FZ320N_010_DiodeL_11    4e14		-30		18/08/2014-17:08	refN100		basN100		-      -
+#basN100	FZ320N_010_DiodeL_11    4e14		-30		18/08/2014-17:29	-		-		-      -
+#################################################################################
+## role	diode                  irradiation	Temperature	TCTdate			reference	baseline	IVdate CVdate
+#refN110	FZ320N_04_DiodeL_5	-		-30		19/08/2014-13:57	-		basN100		-      -
+##irrN110  FZ320N_03_DiodeL_9	6e14		-30		19/08/2014-14:50	refN110		basN100		-      - #wrong
+#irrN111	FZ320N_04_DiodeL_9	6e14		-30		19/08/2014-15:55	refN110		basN100		-      -
+#################################################################################
+## role	diode                  irradiation	Temperature	TCTdate			reference	baseline	IVdate CVdate
+##basP120	FZ320P_02_DiodeL_8     -		+20		21/08/2014-10:51	-		basP121		-      -
+#refP120	FZ320P_02_DiodeL_8     -		+20		-			-		basP121		2014-08-21_2      -
+##refP121	FZ320P_02_DiodeL_8     -		-30		21/08/2014-11:35	-		basP121		-      - # step of 70V
+#refP122	FZ320P_02_DiodeL_8     -		-30		21/08/2014-11:50	-		basP121		-      -
+#irrP122	FZ320P_03_DiodeL_9     4e14		-30		21/08/2014-12:56	refP122		basP121		-      -
+#irrP1221	FZ320P_03_DiodeL_9     4e14		-20		-			-		-		2014-08-21_4 2014-08-21_4
+#irrP1222	FZ320P_03_DiodeL_9     4e14		-30		-			-		-		2014-08-21_5 2014-08-21_5
+#irrP123	FZ320P_06_DiodeL_9     6e14		-30		21/08/2014-14:16	refP122		basP121		-      -
+#irrP124	FZ320P_04_DiodeL_8     6e14		-30		21/08/2014-14:56	refP122		basP121		2014-08-21_5 2014-08-21_5
+#irrP125	FZ320P_01_DiodeL_11    4e14		-30		21/08/2014-15:48	refP122		basP121		-      -
+#irrP126	FZ320P_01_DiodeL_11    4e14		-20		21/08/2014-16:26	refP122		basP121		-      -
+#irrP127	FZ320P_04_DiodeL_8     6e14		-20		21/08/2014-17:09	refP122		basP121		2014-08-21_4 2014-08-21_4
+#irrP128	FZ320P_06_DiodeL_9     6e14		-20		21/08/2014-17:48	refP122		basP121		-      -
+#irrP129	FZ320P_06_DiodeL_9     6e14		-30		21/08/2014-18:13	refP122		basP121		-      -
+#refP123	FZ320P_02_DiodeL_8     -		-20		21/08/2014-19:14	-		basP121		-      -
+#basP121	FZ320P_02_DiodeL_8     -		-20		21/08/2014-19:34	-		-		-      -
+#basP121	FZ320P_02_DiodeL_8     -		-20		21/08/2014-19:55	-		-		-      -
+#################################################################################
+## role	diode                  irradiation	Temperature	TCTdate			reference	baseline	IVdate CVdate
+irrN130	FZ320N_03_DiodeL_9     6e14		-20		21/08/2014-20:30	refN130		basP121		-      -
+irrN131	FZ320N_03_DiodeL_9     6e14		-30		21/08/2014-21:04	refN131		basP121		-      -
+irrN132	FZ320N_010_DiodeL_11   4e14		-20		21/08/2014-21:50	refN130		basP121		-      -
+irrN133	FZ320N_010_DiodeL_11   4e14		-30		21/08/2014-22:17	refN131		basP121		-      -
+refN130	FZ320N_04_DiodeL_5     -		-20		21/08/2014-22:45	-		basP121		-      - # not found
+refN131	FZ320N_04_DiodeL_5     -		-30		21/08/2014-23:08	-		basP121		-      - # not found
+##
+##################################################################################################################
+## role	diode                  irradiation	Temperature	TCTdate			reference	baseline	IVdate CVdate
+##basP1	FZ320P_02_DiodeL_8     -		-20		21/08/2014-19:34	-		-		-      -
+##basP1	FZ320P_02_DiodeL_8     -		-20		21/08/2014-19:55	-		-		-      -
+##refP1	FZ320P_02_DiodeL_8     -		-20		21/08/2014-19:14	-		bas1		-      -
+##refP2	FZ320P_02_DiodeL_8     -		-30		21/08/2014-11:35	-		bas1		-      -
+##irrP1	FZ320P_01_DiodeL_11    4e14		-20		21/08/2014-16:26	ref1		bas1		-      -
+##irrP2	FZ320P_01_DiodeL_11    4e14		-30		21/08/2014-15:48	ref1		bas1		-      -
+##irrP3	FZ320P_03_DiodeL_9     4e14		-30		21/08/2014-12:56	ref1		bas1		-      -
+##irrP4	FZ320P_04_DiodeL_8     6e14		-30		21/08/2014-14:56	ref1		bas1		-      -
+##irrP5	FZ320P_04_DiodeL_8     6e14		-30		21/08/2014-17:09	ref1		bas1		-      -
+##irrP6	FZ320P_06_DiodeL_9     6e14		-30		21/08/2014-14:16	ref1		bas1		-      -
+##irrP7	FZ320P_06_DiodeL_9     6e14		-20		21/08/2014-17:48	ref1		bas1		-      -
+##irrP8	FZ320P_06_DiodeL_9     6e14		-30		21/08/2014-18:13	ref1		bas1		-      -
+#################################################################################
+###refP1	FZ320P_02_DiodeL_8     -		+20		-			-		bas1		21/08/2014      -
+################################################################################# IV/CV
+##refN1001 FZ320N_04_DiodeL_5      -		+20		-			-		-		-
+irrN1500	FZ320N_03_DiodeL_8	 4e14		-20		-			-		-		2014-08-21_4 2014-08-21_4
+irrN1501	FZ320N_03_DiodeL_8	 4e14		-30		-			-		-		2014-08-21_5 2014-08-21_5
+irrN1510	FZ320N_04_DiodeL_9	 6e14		-20		-			-		-		2014-08-21_4 2014-08-21_4
+irrN1511	FZ320N_04_DiodeL_9	 6e14		-30		-			-		-		2014-08-21_5 2014-08-21_5
+####
+irrN1611	FZ200N_07_DiodeL_9	1.5e15		-20		-			-		-		2014-08-22_5 2014-08-22_5
+irrN1612	FZ200N_07_DiodeL_9	1.5e15		-30		-			-		-		2014-08-22_6 2014-08-22_6
+irrN1621	FZ200N_07_DiodeL_11	2.5e15		-20		-			-		-		2014-08-22_4 2014-08-22_4
+irrN1622	FZ200N_07_DiodeL_11	2.5e15		-30		-			-		-		2014-08-22_5 2014-08-22_5
+irrN1623	FZ200N_07_DiodeL_11	2.5e15		-30		-			-		-		2014-08-22_6 2014-08-22_6
+##################################################################################
+#irrN170		FZ320N_03_DiodeL_9	6e14		-20		21/08/2014-20:30	refN170		-	 - -
+#irrN171		FZ320N_03_DiodeL_9	6e14		-30		21/08/2014-21:04	refN170		-	 - -
+#irrN172		FZ320N_010_DiodeL_11	4e14		-20		21/08/2014-21:50	refN170		-	 - -
+#irrN173		FZ320N_010_DiodeL_11	4e14		-30		21/08/2014-22:17	refN170		-	 - -
+#refN170		FZ320N_04_DiodeL_5	-		-20		21/08/2014-22:45	-		-	 - -
+#refN171		FZ320N_04_DiodeL_5	-		-30		21/08/2014-23:08	-		-	 - -
+cvN000			FZ120N_08_DiodeS_13	1.00e16		-30		-			-		-	2014-08-22_5  2014-08-22_5
