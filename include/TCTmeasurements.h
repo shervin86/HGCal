@@ -263,14 +263,18 @@ class TCTmeasurements{
     }
   
     float Q = spItr->second.GetWaveIntegral(min, max);
-    float Q0 = 0.;
+    float Q0=0.;
+    if( (*_r)[400]!=_r->end() ){
+      Q0 = (*_r)[400]->second.GetWaveIntegral(min,max);
+    }
 
+    if(false && fbias>500){
     TGraph *g = _r->GetQvsV(min,max);
     TFitResultPtr p = g->Fit("pol1","QS","",400,1000);
     //p->Print();
     TF1 *f = g->GetFunction("pol1");
     Q0=f->Eval(1000);
- 
+    }
    /* auto ref=_r->end(); */
    /* //take the average over 25 last points */
    /*  unsigned int i=0; */
@@ -312,6 +316,7 @@ class TCTmeasurements{
 
   /// set the baseline
   void SetBaseline(const TCTmeasurements& baseline){ _baseline=&baseline;};
+  const TCTmeasurements& GetBaseline(void) const{ return *_baseline;};
 
   //average over all the acquisitions of this measurement, regardless the bias voltage applied (biasCheck==false)
   TCTspectrum GetAverage(bool checkBias=false)const; ///< average over all acquisitions of this measurement
@@ -351,6 +356,22 @@ class TCTmeasurements{
 
   TGraph *GetWaveForm(const_iterator itr, std::string graphName, std::string graphTitle)const;
 
+  inline void  AddSpectrum(TCTspectrum &sp, bool isAverage){
+    if(isAverage){
+      
+      acquisitionAverage=sp;
+      _isAverage=true;
+    }  
+    acquisition.insert( std::make_pair<float, TCTspectrum>(sp.GetBias(),sp));
+  }
+
+
+  /// remove all acquisitions, not the averages
+ void reset(){
+   acquisition.clear();
+   acquisitionRMS.clear();
+}
+
  private:
   //TCTmeasurements &_baseline;
   
@@ -364,7 +385,7 @@ class TCTmeasurements{
     acquisition.insert( tmp.begin(), tmp.end());
   };
 
-
+  
   // divide in order to perform average or rescale
   TCTmeasurements& operator/=(const float scale){
     for(auto itr=begin(); itr!=end(); itr++){
@@ -379,12 +400,6 @@ class TCTmeasurements{
       itr->second=0.;
     }
   };
-
-  /// remove all acquisitions, not the averages
- void reset(){
-   acquisition.clear();
-   acquisitionRMS.clear();
-}
 
 
 

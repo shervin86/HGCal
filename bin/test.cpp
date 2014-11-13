@@ -266,6 +266,8 @@ void SetCV(configFileParser& parser, CVMap_t ivmap){
   }
 }
 
+
+
 void SetBaselines(measMap_t& irradiatedsMap, measurementMap_t& referenceMap, configFileParser& parser){
 
   // loop over measurements
@@ -278,9 +280,19 @@ void SetBaselines(measMap_t& irradiatedsMap, measurementMap_t& referenceMap, con
     	v_itr++){
       // get the baseline
       std::string basName = parser.find(m_itr->first)->second.GetBaseline();
+
+      
+      if(basName==m_itr->first){ // use the V=0 as baseline
+	TCTmeasurements *ref = new TCTmeasurements();
+	ref->AddSpectrum((*v_itr)[0]->second, true);
+	v_itr->SetBaseline(*ref);
+      }else{
+
+      if(referenceMap.count(basName)==0) continue;
       assert(referenceMap.count(basName)!=0);
       const TCTmeasurements& ref = referenceMap[basName];
       v_itr->SetBaseline(ref);
+      }
     }
   }
 }
@@ -315,9 +327,10 @@ int main(int argc, char **argv){
   float timeMin, timeMax;
 
   po::options_description inputOption("Input options");
-  std::string baseDir, configFilename, tctFilename, ivFilename, cvFilename;
+  std::string baseDir, configFilename, tctFilename, ivFilename, cvFilename, ivGRFilename, cvGRFilename;
   std::string tctType;
   std::vector< std::string > tctBaselineFiles, tctReferenceFiles;
+  float spectrumDumpBias=0;
    //po::options_description cmd_line_options;
   //cmd_line_options.add(desc).add(fitOption).add(smearOption);
 
@@ -329,17 +342,19 @@ int main(int argc, char **argv){
     ("TCT", "do TCT analysis")
     ("checkBaselines", "do a check on the baselines for TCT")
     ("onlyBaselines", "")
+    ("noBaselineSubtraction","")
     ;
   inputOption.add_options()
     ("baseDir,d", po::value< std::string >(&baseDir)->default_value("data/shervin"), "directory with data files")
     ("configFile,f", po::value< std::string >(&configFilename), "File with list of measurements")
-    ("type", po::value< std::vector< std::string > >, "")
-    ("tctType, t", po::value<std::string >(&tctType), "Index in the config file")
+    //    ("type", po::value< std::vector< std::string > >(&types), "")
+    ("tctType,t", po::value<std::string >(&tctType), "Index in the config file")
     ("tctFile", po::value< std::string >(&tctFilename), "single tct file") // for single validation
     ("tctBaseline", po::value< std::vector<std::string> >(&tctBaselineFiles), "tct measurement uses ad baseline, can be called multiple times") 
     ("tctReference", po::value< std::vector<std::string> >(&tctReferenceFiles), "tct measurement uses ad baseline, can be called multiple times") 
     ("ivFile", po::value< std::string >(&ivFilename), "single iv file") // for single validation
     ("cvFile", po::value< std::string >(&cvFilename), "single cv file") // for single validation
+    ("spectrumDump", po::value< float>(&spectrumDumpBias), "bias voltage")
     ;
   outputOption.add_options()
     ("outDir", po::value<std::string>(&outDir),"")
@@ -413,7 +428,10 @@ int main(int argc, char **argv){
 
   if(vm.count("tctFile")){
     tct=TCTmeasurements(tctFilename, -999);
-    tct-=baseline.GetAverageMeasurement();
+    std::cout << tct.GetSpectrum(0).GetN() << std::endl;
+    std::ofstream tf("tmp/test.dat");
+    tct[626]->second.dump(tf);
+    //tct-=baseline.GetAverageMeasurement();
     tct.SetReference(reference, "");
     
     tct.SetPaletteColor(fPaletteColor, 50);
@@ -435,7 +453,7 @@ int main(int argc, char **argv){
     multi.SaveAs("tmp/tctValidation/QvsV.root");
 
     ofstream ff_out("result/tmp/result.dat");
-    configFileContent ;p
+    configFileContent p;
     diode d("tmp", p,  tct, timeMin, timeMax);
     //if(ivItr!=ivMap.end()) d.SetIV(ivItr->second); 
     //if(cvItr!=cvMap.end()) d.SetCV(cvItr->second); 
@@ -485,32 +503,66 @@ int main(int argc, char **argv){
   // averaged measurements of the same type
   measurementMap_t baselineMap, referenceMap, irradiatedMap;  
 
-  IVMap_t ivMap;
-  CVMap_t cvMap;
+  IVMap_t ivMap, ivGRMap;
+  CVMap_t cvMap, cvGRMap;
 
   // import all the measurements indicated in the config file
   IVimport ivimporter;  
   CVimport cvimporter;
+
+  std::string basType, refType;
+  if(vm.count("tctType")){
+    if(parser.check(tctType)==false){
+      std::cerr << "[ERROR] ID not found for tct measurement" << std::endl;
+      exit(1);
+    }
+    auto itr = parser.find(tctType);
+    basType=itr->second.TCTbaseline;
+    refType=itr->second.TCTreference;
+  }
+
+
   for(unsigned int i=0; i < parser.size(); i++){
     std::string type = parser.GetType(i);
+    if(vm.count("tctType") && type!=basType && type!=refType && type!=tctType) continue;
+
     ivFilename = parser.GetIVfilename(i);
+    ivGRFilename = parser.GetIVGRfilename(i);
+
+    std::cout << "[INFO] IV file: " << ivFilename << std::endl;
     cvFilename = parser.GetCVfilename(i);
+    cvGRFilename = parser.GetCVGRfilename(i);
     tctFilename = parser.GetTCTfilename(i);
     TCTmeasurements *tct=NULL;
     if(tctFilename!=""){ 
       tct=new TCTmeasurements(baseDir+"/"+tctFilename, parser.GetTemperature(i)); // add baseline measurement
       tct->SetPaletteColor(fPaletteColor,50);
     }
+
+    // skip -20 degree
+    //    if(type.rfind("20")==type.size()-2) continue;
+    //    std::cout << type << "\t" << type.rfind("20") << std::endl;
     if(type.find("bas")!=std::string::npos){
       baselinesMap[type].push_back(*tct);
     } else if(type.find("ref")!=std::string::npos){
       if(ivFilename!="")  ivMap[type]= ivimporter.ImportFromFile(baseDir+"/"+ivFilename);
       if(cvFilename!="")  cvMap[type]= cvimporter.ImportFromFile(baseDir+"/"+cvFilename);
+      if(ivGRFilename!="")  ivGRMap[type]= ivimporter.ImportFromFile(baseDir+"/"+ivGRFilename);
+      if(cvGRFilename!="")  cvGRMap[type]= cvimporter.ImportFromFile(baseDir+"/"+cvGRFilename);
+
       if(tctFilename!="") referencesMap[type].push_back(*tct);
     } else if(type.find("irr")!=std::string::npos){
       if(ivFilename!="") ivMap[type]= ivimporter.ImportFromFile(baseDir+"/"+ivFilename);
       if(cvFilename!="") cvMap[type]= cvimporter.ImportFromFile(baseDir+"/"+cvFilename);
+      if(ivGRFilename!="") ivGRMap[type]= ivimporter.ImportFromFile(baseDir+"/"+ivGRFilename);
+      if(cvGRFilename!="") cvGRMap[type]= cvimporter.ImportFromFile(baseDir+"/"+cvGRFilename);
+
       if(tctFilename!="") irradiatedsMap[type].push_back(*tct);
+    } else if(type.find("rbl")!=std::string::npos){
+      TCTmeasurements *referenceBaseline = new TCTmeasurements(*tct);
+      referenceBaseline->reset();
+      referenceBaseline->AddSpectrum((*tct)[0]->second, true);
+      baselinesMap[type].push_back(*referenceBaseline);
     } else{
       std::cout << type << std::endl;
       assert(false); /// \todo replace with message and exception
@@ -603,6 +655,7 @@ int main(int argc, char **argv){
  //      c.SaveAs(TString(filename).ReplaceAll(".root",("."+imgFormat).c_str()));
     }
   SetCV(parser, cvMap);
+  //  SetCVGR(parser, cvGRMap);
   // now you have all the measurements as vectors
   }
 
@@ -634,6 +687,7 @@ int main(int argc, char **argv){
     g->Write();
     } 
   SetIV(parser, ivMap);
+  //SetIVGR(parser, ivGRMap);
 
   }
 
@@ -768,7 +822,18 @@ int main(int argc, char **argv){
       } else {
 	// subtract the baseline 
 	//std::cout << basName << std::endl;
-	(*v_itr) -= baselineMap[basName].GetAverageMeasurement();
+	//if(!vm.count("noBaselineSubtraction")) (*v_itr) -= baselineMap[basName].GetAverageMeasurement();
+	if(!vm.count("noBaselineSubtraction")) (*v_itr) -= (*v_itr).GetBaseline().GetAverageMeasurement();
+	for(auto spec_itr = v_itr->begin(); spec_itr!=v_itr->end(); spec_itr++){ // loop over all the bias voltages
+	  TCTspectrum& spec = spec_itr->second;
+	  if(spec.empty()) continue; ///\todo check why
+	  float mean = spec.GetMean(0., timeMin);
+	  //	  std::cout << type_itr->first << "\t" << spec_itr->first << "\t" << mean; // << std::endl;
+	  spec-=mean;
+	  //	  std::cout <<  "\t" << spec.GetMean(0., timeMin) << std::endl;
+
+	  //spec-=-5e-3;
+	} 
       }
 
       for(unsigned int i=0; i < v_itr->size(); i++){ // loop over all bias voltage	
@@ -801,6 +866,8 @@ int main(int argc, char **argv){
   fixedBiasGraphs.Write();
   
   //  checkCompatiblity(referencesMap, "checkReferences", RMS);
+
+  
 
   if(!checkMeasurementBaseline(RMS, timeMin, timeMax, referencesMap, "checkReferencesBaseline")){
     std::cerr << "[WARNING] check association of references and baselines" << std::endl;
@@ -835,7 +902,20 @@ int main(int argc, char **argv){
 
       // subtract the baseline 
       //      std::cout << (parser.find(m_itr->first))->second.type << "\t" << basName << "\t" << std::endl;
-      (*v_itr) -= baselineMap[basName].GetAverageMeasurement();
+      if(baselineMap.count(basName)!=0){
+	(*v_itr) -= baselineMap[basName].GetAverageMeasurement();
+      }
+	for(auto spec_itr = v_itr->begin(); spec_itr!=v_itr->end(); spec_itr++){ // loop over all the bias voltages
+	  TCTspectrum& spec = spec_itr->second;
+	  if(spec.empty()) continue; ///\todo check why
+	  float mean = spec.GetMean(0., timeMin);
+	  //	  std::cout << type_itr->first << "\t" << spec_itr->first << "\t" << mean; // << std::endl;
+	  spec-=mean;
+	  //	  std::cout <<  "\t" << spec.GetMean(0., timeMin) << std::endl;
+
+	  //spec-=-5e-3;
+	} 
+
       unsigned int i=0;
       for(auto itr=v_itr->begin(); itr!=  v_itr->end(); itr++){ // loop over all bias voltage
 	TGraph *gg = v_itr->GetWaveForm(itr,"",""); //
@@ -898,12 +978,17 @@ int main(int argc, char **argv){
   DumpCCE(parser, irradiatedMap, 600, timeMin, timeMax);
   
   std::cout << "------------------------------CCE at 1000 V" << std::endl;
-  DumpCCE(parser, irradiatedMap, 1000, timeMin,timeMax);
+  //DumpCCE(parser, irradiatedMap, 1000, timeMin,timeMax);
+
+  
+  // std::cout << "------------------------------CCE at 400 V" << std::endl;
+  // DumpCCE(parser, irradiatedMap, 400, timeMin,timeMax);
 
   }
 
   parser.Dump();
 
+    
   std::ofstream f_out("test.dat");
   std::string typeMatch="ref";
   configFileParser::lines_t::key_type oldVal;
@@ -921,10 +1006,15 @@ int main(int argc, char **argv){
     //    std::cout << irradiatedMap[oldVal].GetReferenceType() << std::endl;
     auto ivItr = ivMap.find(oldVal);
     auto cvItr = cvMap.find(oldVal);
-    
+    auto ivGRItr = ivGRMap.find(oldVal);
+    auto cvGRItr = cvGRMap.find(oldVal);
+
     diode d(oldVal, p,  referenceMap[oldVal], timeMin, timeMax);
     if(ivItr!=ivMap.end()) d.SetIV(ivItr->second); 
     if(cvItr!=cvMap.end()) d.SetCV(cvItr->second); 
+    if(ivGRItr!=ivGRMap.end()) d.SetIVGR(ivGRItr->second); 
+    if(cvGRItr!=cvGRMap.end()) d.SetCVGR(cvGRItr->second); 
+    
     //diode d(p, ivMap[oldVal], cvMap[oldVal], irradiatedMap[oldVal], timeMin, timeMax);
     d.dump(ff_out);
     ff_out.close();
@@ -945,16 +1035,37 @@ int main(int argc, char **argv){
     //    std::cout << irradiatedMap[oldVal].GetReferenceType() << std::endl;
     auto ivItr = ivMap.find(oldVal);
     auto cvItr = cvMap.find(oldVal);
+    auto ivGRItr = ivGRMap.find(oldVal);
+    auto cvGRItr = cvGRMap.find(oldVal);
+
     
     diode d(oldVal, p,  irradiatedMap[oldVal], timeMin, timeMax);
     if(ivItr!=ivMap.end()) d.SetIV(ivItr->second); 
     if(cvItr!=cvMap.end()) d.SetCV(cvItr->second); 
+    if(ivGRItr!=ivGRMap.end()) d.SetIVGR(ivGRItr->second); 
+    if(cvGRItr!=cvGRMap.end()) d.SetCVGR(cvGRItr->second); 
+
     //diode d(p, ivMap[oldVal], cvMap[oldVal], irradiatedMap[oldVal], timeMin, timeMax);
     d.dump(ff_out);
     ff_out.close();
   }
 
   f_out.close();
+
+  if(vm.count("spectrumDump")){
+    char spectrumDumpBiasStr[30];
+    sprintf(spectrumDumpBiasStr, "%.0f", spectrumDumpBias);
+    for(auto itr = referenceMap.begin(); itr!=referenceMap.end(); itr++){
+      std::ofstream ff_out("result/"+itr->first+"/spectrum_"+spectrumDumpBiasStr+".dat");
+      itr->second[spectrumDumpBias]->second.dump(ff_out);
+    }
+    for(auto itr = irradiatedMap.begin(); itr!=irradiatedMap.end(); itr++){
+      std::ofstream ff_out("result/"+itr->first+"/spectrum_"+spectrumDumpBiasStr+".dat");
+      itr->second[spectrumDumpBias]->second.dump(ff_out);
+    }
+
+  }
+
     return 0;
   
 

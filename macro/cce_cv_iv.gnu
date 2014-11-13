@@ -5,7 +5,7 @@ do for [n=2:ARGC]{
 }
 #print files
 
-columnLegend=12
+columnLegend=13
 
 set term pngcairo fontscale 1 size 10in,10in
 set output outfile

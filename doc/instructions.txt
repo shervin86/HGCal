@@ -51,4 +51,21 @@ remove jumping points in CV and IV measurements
  - average of 3 points before and 3 points after
  - RMS 3 points before, 3 points after
  - if point not within 1 RMS, the point is rejected
+
+
+\section instructions
+\code 
+./bin/test.exe -f data/dataP.dat --TCT --CV --IV 
+\endcode
+
+\section database
+\subsection CV
+\code
+select * from CVCURVE_1_SEN_ where OBJECT_ID like 'FZ320N%' AND (FREQUENCY>1000 OR FREQUENCY=455)
+select * from IVCURVE_1_SEN_ where OBJECT_ID like 'FZ320N%'  AND TCOMMENT like 'HPK%'
+select * from 
+\endcode
+
+ p 'FZ200N_03_DiodeL_2.dat' u "VBias":(column("Q")/column("Qref")) notitle, 'FZ200P_02_DiodeL_9.dat' u "VBias":(column("Q")/column("Qref")) notitle, 'result/irrP1830/result.dat' u "bias":"CCE" notitle
+
 */

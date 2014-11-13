@@ -1,7 +1,9 @@
 #attenuator 5dB
 #------------------------------ disconnected IR-laser front
 # role		diode                  irradiation	Temperature	TCTdate			reference	baseline	IVdate CVdate
-basN5030	FZ200N_07_DiodeL_11    2.5e15		-30		28/09/2014-18:14	-		-		-      -
+#basN5030	FZ200N_07_DiodeL_11    2.5e15		-30		28/09/2014-18:14	-		-		-      -
 #------------------------------ connected IR-laser front
-irrN5030	FZ200N_07_DiodeL_11    2.5e15		-30		28/09/2014-19:03	refN5030	basN5030	-      -
-refN5030	FZ200N_05_DiodeL_3     -		-30		28/09/2014-20:45	-		basN5030	-      -
+#irrN5030	FZ200N_07_DiodeL_11    2.5e15		-30		28/09/2014-19:03	refN5030	basN5030	-      -
+#refN5030	FZ200N_05_DiodeL_3     -		-30		28/09/2014-20:45	-		basN5030	-      -
+refN6030	FZ200N_05_DiodeL_3     -		-30		22/08/2014-12:25	-		-	-      -
+irrN6030	FZ200N_04_DiodeL_9     2.5e15		-30		22/08/2014-11:22	refN6030	-	-      -

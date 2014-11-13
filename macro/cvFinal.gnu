@@ -2,7 +2,7 @@ files=""
 file=ARG1
 file2=ARG2
 
-columnLabel=12
+columnLabel=13
 
 #@TERMCH 'pdf'
 TERM='pdf'

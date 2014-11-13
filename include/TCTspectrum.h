@@ -164,6 +164,21 @@ class TCTspectrum: public TCTspectrumBase{
   float GetWaveIntegral(float min, float max, float baselineMean=0.) const;
   ///@}
 
+  ///\name gnuplot
+  ///@{
+  
+  /// dump spectrum on text file to be plotted with gnuplot
+  inline void dump(std::ostream& f){
+    float dt=GetTimeScanUnit();
+    float t=0;
+    f<< "time\tsample" << std::endl;
+    for(unsigned int i=0; i< _nSamples; i++){
+      f << t << "\t" << _samples[i] << "\n";
+      t+=dt;
+    }
+   f<< std::endl;
+  }
+
  private:
   bool _noisy;
   

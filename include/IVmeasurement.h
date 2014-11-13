@@ -208,6 +208,11 @@ class IVmeasurement{
   iterator       begin(){     return __current.begin();};
   iterator       end(){       return __current.end();  };
 
+  const_iterator beginGR()const{return __guardCurrent.begin();}; 
+  const_iterator endGR()const{  return __guardCurrent.end();  };
+  iterator       beginGR(){     return __guardCurrent.begin();};
+  iterator       endGR(){       return __guardCurrent.end();  };
+
   /// return iterator to the spectrum with given bias voltage (absolute value), or to end()
   const_iterator operator[](float bias) const{
     float fbias=fabs(bias);
@@ -225,6 +230,24 @@ class IVmeasurement{
     if(fabs(iter->first-fbias)<1e-2) return iter;
     return end();
   }
+
+  const_iterator find(float bias, bool guardRing)const{
+    float fbias=fabs(bias);
+    auto iter = guardRing ? (__guardCurrent.upper_bound(fbias)) : (__current.upper_bound(fbias));
+    if(iter==begin()) return end();
+    iter--;
+    if(fabs(iter->first-fbias)<1e-2) return iter;
+    return end();
+  }
+  iterator find(float bias, bool guardRing){
+    float fbias=fabs(bias);
+    auto iter = guardRing ? (__guardCurrent.upper_bound(fbias)) : (__current.upper_bound(fbias));
+    if(iter==begin()) return end();
+    iter--;
+    if(fabs(iter->first-fbias)<1e-2) return iter;
+    return end();
+  }
+
   ///@}
     
  protected:

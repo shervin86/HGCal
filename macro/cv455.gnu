@@ -4,7 +4,7 @@ do for [n=1:ARGC]{
 }
 #print files
 
-columnLegend=12
+columnLegend=13
 
 set key outside center top hor
 

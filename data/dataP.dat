@@ -11,13 +11,13 @@ refP1924 FZ120P_01_DiodeL_8	-		0		-		-		-		2014-09-27_4 -
 #------------------------------ disconnected IR-laser front
 # role	diode                  irradiation	Temperature	TCTdate			reference	baseline	IVdate CVdate
 basP1020	FZ320P_02_DiodeL_8      -		-20		21/09/2014-10:46	-		-		-      -
-#basP1030	FZ320P_02_DiodeL_8      -		-30		21/09/2014-11:12	-		-		-      - # ramp up -> strange
+basP1030	FZ320P_02_DiodeL_8      -		-30		21/09/2014-11:12	-		-		-      - # ramp up -> strange
 basP1030	FZ320P_02_DiodeL_8      -		-30		21/09/2014-11:34	-		-		-      - # ramp down
 #------------------------------ reconnected IR-laser front
 refP1030 FZ320P_02_DiodeL_8      -		-30		21/09/2014-11:58	-		basP1030		-      -
 refP1020 FZ320P_02_DiodeL_8      -		-20		21/09/2014-12:30	-		basP1020		-      -
 #refP1021 FZ320P_02_DiodeL_8      -		20		-			-		-			2014-09-21_3 2014-09-21_3
-#refP1022 FZ320P_02_DiodeL_8      -		0		-			-		-			2014-09-21_4 2014-09-21_4
+refP1022 FZ320P_02_DiodeL_8      -		0		-			-		-			2014-09-21_4 2014-09-21_4
 #refP1023 FZ320P_02_DiodeL_8      -		20		-			-		-			2014-08-21_1 2014-08-21_1
 #refP1024 FZ320P_02_DiodeL_8      -		20		-			-		-			2014-08-21_2 2014-08-21_2
 #--

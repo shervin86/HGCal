@@ -128,18 +128,39 @@ float TCTspectrum::GetWaveIntegral(float min, float max, float baselineMean) con
       std::cerr << "[ERROR] No points for this spectrum: " << GetDiodeName() << "\t" << GetBias() << std::endl;
       assert(GetN()>0);
     }
-    assert(min<max);
+    assert( (max > 0 && min<max) || max<0);
     assert(min<_timeScanUnit*GetN());
 
     float integral=0.;
-    unsigned int binMax=(unsigned int)(max/_timeScanUnit);
-    //    std::cout << binMax << "\t" << GetN() << "\t" << _timeScanUnit << "\t" << max << "\t" << max-min << std::endl;
-    if(binMax>GetN()) binMax=GetN();
+    if(max>0){
+      unsigned int binMax = (unsigned int)(max/_timeScanUnit);
+	//    std::cout << binMax << "\t" << GetN() << "\t" << _timeScanUnit << "\t" << max << "\t" << max-min << std::endl;
+	if(binMax>GetN()) binMax=GetN();
 
-    for(unsigned int i=(unsigned int)(min/_timeScanUnit); i < binMax; i++){
-      //std::cout << "integral = " << integral << "\t" << i << "\t" << _samples[i] << std::endl;
-      integral += _samples[i]-baselineMean;
+	for(unsigned int i=(unsigned int)(min/_timeScanUnit); i < binMax; i++){
+	  integral += _samples[i]-baselineMean;
+	}
+    }else{
+      unsigned int binMax=GetN(), binMin=(unsigned int)(min/_timeScanUnit);
+      auto oldSample=_samples[binMin];
+
+     for(unsigned int i=binMin;  i < binMax; i++){
+      if(oldSample*_samples[i]>0 || (fabs(oldSample)>fabs(_samples[i])) ){ // if not opposite sign means it has passed the 0
+	integral += _samples[i]-baselineMean;
+	//	std::cout << "integral = " << integral << "\t" << i << "\t" << _samples[i] << "\t" << oldSample << std::endl;  
+      }
+      if(i-binMin>10 && oldSample*_samples[i]<0){
+	//	std::cout << "--> integral = " << integral << "\t" << i << "\t" << _samples[i] << "\t" << oldSample << std::endl;  
+	break;
+      }
+
+      //
+      oldSample=_samples[i];
+  
+     }
     }
+      
+
     return integral*_timeScanUnit;
   };
 

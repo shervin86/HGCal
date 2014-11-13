@@ -32,6 +32,8 @@ class configFileContent{
     TCTbaseline("nan"),
     IVdate("nan"),
     CVdate("nan"),
+    IVGRdate("nan"),
+    CVGRdate("nan"),
     Vdep_CV(0.), Vdep_CVerror(0.),
     Vdep_IV(0.), Vdep_IVerror(0.),
     Vdep_TCT(0.),
@@ -49,7 +51,10 @@ class configFileContent{
     TCTbaseline, ///< name of the diode used for the baseline
     //  TCTbaselineDate, ///< date and time of the baseline measurement
     IVdate, ///< date of the IV measurement
-    CVdate; ///< date of the CV measurement
+    CVdate, ///< date of the CV measurement
+    IVGRdate, ///< date of the IV measurement with Guard Ring connected
+    CVGRdate; ///< date of the CV measurement with Guard Ring connected
+
   float Vdep_CV, ///< depletion voltage measured from CV
     Vdep_CVerror,
     Vdep_IV, ///< depletion voltage measured from IV
@@ -76,6 +81,12 @@ class configFileContent{
   inline std::string GetThickness() const{ 
     std::string thickness= diodeName.substr(2,3);
     return thickness;
+  }
+
+
+  inline std::string GetSurface()const{
+    if(diodeName.find("DiodeS")!=std::string::npos) return "4"; //"6.25";
+    else return "25";
   }
 
   inline bool operator<(const configFileContent& rhs)const{
@@ -119,11 +130,11 @@ class configFileContent{
   /** input file format:
    * 
    \verbatim 
-# role	diode                  irradiation	Temperature	TCTdate			reference	baseline	IVdate CVdate
-ref1	FZ320P_02_DiodeL_8     -		-20		21/08/2014-19:14	-		-		-      -
-bas1	FZ320P_02_DiodeL_8     -		-20		21/08/2014-19:34	-		-		-      -
-bas1	FZ320P_02_DiodeL_8     -		-20		21/08/2014-19:55	-		-		-      -
-irr1	FZ320P_01_DiodeL_11    4e14		-20		21/08/2014-16:26	ref1		bas1		-      -
+# role	diode                  irradiation	Temperature	TCTdate			reference	baseline	IVdate CVdate IVGRdate CVGRdate
+ref1	FZ320P_02_DiodeL_8     -		-20		21/08/2014-19:14	-		-		-      -      -        -
+bas1	FZ320P_02_DiodeL_8     -		-20		21/08/2014-19:34	-		-		-      -      -        -
+bas1	FZ320P_02_DiodeL_8     -		-20		21/08/2014-19:55	-		-		-      -      -        -
+irr1	FZ320P_01_DiodeL_11    4e14		-20		21/08/2014-16:26	ref1		bas1		-      -      -        -
 \endverbatim
   */
   configFileContent& operator<<(std::ifstream& f){
@@ -137,16 +148,17 @@ irr1	FZ320P_01_DiodeL_11    4e14		-20		21/08/2014-16:26	ref1		bas1		-      -
 
     // now read from the stream, so ignore what is after CVdate (comments)
     fline >> std::skipws 
-      >> type 
-      >>  diodeName 
-      >>  irradiation 
-      >>  temp  
-      >>  TCTdate 
-      >>  TCTreference 
-      >>  TCTbaseline 
-      >>  IVdate 
-      >>  CVdate;
-    
+	  >> type 
+	  >>  diodeName 
+	  >>  irradiation 
+	  >>  temp  
+	  >>  TCTdate 
+	  >>  TCTreference 
+	  >>  TCTbaseline 
+	  >>  IVdate 
+	  >>  CVdate
+	  >>  IVGRdate 
+	  >>  CVGRdate;
     if(TCTdate!="-"){
     TCTtime = stringToTime(TCTdate);
     //    TCTreferenceTime = stringToTime(TCTreferenceDate);
@@ -174,7 +186,7 @@ irr1	FZ320P_01_DiodeL_11    4e14		-20		21/08/2014-16:26	ref1		bas1		-      -
     sscanf(timeString.c_str(), "%d/%d/%d-%d:%d", &DD, &MM, &YYYY, &hh, &mm);
     struct tm timeinfo;
     timeinfo.tm_min=mm;
-    timeinfo.tm_hour=hh;
+    timeinfo.tm_hour=hh+1;
     timeinfo.tm_mday=DD;
     timeinfo.tm_mon=MM-1;
     timeinfo.tm_year=YYYY-1900;
@@ -266,6 +278,7 @@ class configFileParser{
     return iter->second.GetTemperatureString();
   }
 
+
   inline std::string GetLegend(std::string type) const{
     auto iter = find(type);
     return iter->second.GetLegend();
@@ -320,7 +333,7 @@ class configFileParser{
     else 
       return baseDir+"/"+GetDiodeBasename(iter->second.diodeName)+"/"+iter->second.diodeName+"/"+iter->second.diodeName+"_"+iter->second.IVdate+".iv";
   }
-    
+
   inline std::string GetCVfilename(int index, std::string baseDir=""){
     auto iter = lines.begin();
     std::advance(iter,index);
@@ -330,6 +343,29 @@ class configFileParser{
       return GetDiodeBasename(iter->second.diodeName)+"/"+iter->second.diodeName+"/"+iter->second.diodeName+"_"+iter->second.CVdate+".cv";
     else 
       return baseDir+"/"+GetDiodeBasename(iter->second.diodeName)+"/"+iter->second.diodeName+"/"+iter->second.diodeName+"_"+iter->second.CVdate+".cv";
+  }
+
+
+  inline std::string GetIVGRfilename(int index, std::string baseDir=""){
+    auto iter = lines.begin();
+    std::advance(iter,index);
+    if(iter->second.IVGRdate=="-") return "";
+    
+    if(baseDir.empty())
+      return GetDiodeBasename(iter->second.diodeName)+"/"+iter->second.diodeName+"/"+iter->second.diodeName+"_"+iter->second.IVGRdate+".iv";
+    else 
+      return baseDir+"/"+GetDiodeBasename(iter->second.diodeName)+"/"+iter->second.diodeName+"/"+iter->second.diodeName+"_"+iter->second.IVGRdate+".iv";
+  }
+
+  inline std::string GetCVGRfilename(int index, std::string baseDir=""){
+    auto iter = lines.begin();
+    std::advance(iter,index);
+    if(iter->second.CVGRdate=="-") return "";
+    
+    if(baseDir.empty())
+      return GetDiodeBasename(iter->second.diodeName)+"/"+iter->second.diodeName+"/"+iter->second.diodeName+"_"+iter->second.CVGRdate+".cv";
+    else 
+      return baseDir+"/"+GetDiodeBasename(iter->second.diodeName)+"/"+iter->second.diodeName+"/"+iter->second.diodeName+"_"+iter->second.CVGRdate+".cv";
   }
     
   /* inline std::string GetTCTreferenceFilename(int index, std::string baseDir=""){ */

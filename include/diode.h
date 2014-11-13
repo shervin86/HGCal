@@ -23,8 +23,8 @@ class diode{
  private:
   std::string _id;
   configFileContent _property;
-  IVmeasurement     _iv;
-  CVmeasurement     _cv;
+  IVmeasurement     _iv, _ivGR;
+  CVmeasurement     _cv, _cvGR;
   TCTmeasurements   _tct;
   float             _startSignal;
   float             _endSignal;
@@ -44,6 +44,8 @@ class diode{
   void SetTCT(TCTmeasurements tct){_tct=tct;};
   void SetIV(IVmeasurement iv){    _iv=iv;};
   void SetCV(CVmeasurement cv){    _cv=cv;};
+  void SetIVGR(IVmeasurement iv){    _ivGR=iv;};
+  void SetCVGR(CVmeasurement cv){    _cvGR=cv;};
 
   void SetStartSignal(float startSignal){ _startSignal=startSignal;};
   void SetEndSignal(float endSignal){ _endSignal=endSignal;};

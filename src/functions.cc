@@ -66,6 +66,7 @@ measurementMap_t splitMeasurements(measMap_t m){
 
 // return true if ok
 bool checkCompatiblity(measMap_t &baselinesMap, std::string checkName, float& RMS){
+  if(baselinesMap.empty()) return true;
   RMS=0;
   bool returnValue=false;
 
@@ -110,7 +111,7 @@ bool checkCompatiblity(measMap_t &baselinesMap, std::string checkName, float& RM
 	      << "\t" << rms << std::endl;
     
     // check that baselines are compatible
-    assert(abs(mean)<rms); 
+    //assert(abs(mean)<rms); 
     returnValue = abs(mean)<rms;
     TGraph *g = spec.GetWaveForm(itr->first,itr->first);
     //std::cout << spec.GetTemperature() << std::endl;
