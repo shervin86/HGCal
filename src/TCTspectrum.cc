@@ -11,6 +11,10 @@ void TCTspectrum::dump(std::ostream& f, std::string legend, const TCTspectrum *r
   if(rmsSpectrum!=NULL) f << "stdDev\t";
   f << legend << "\n";
 
+  f.scientific;
+  f.precision(4);
+
+
   if(rmsSpectrum!=NULL){
       
     for(unsigned int i=0; i< _nSamples; i++){
@@ -19,7 +23,7 @@ void TCTspectrum::dump(std::ostream& f, std::string legend, const TCTspectrum *r
     }
   }else {
     for(unsigned int i=0; i< _nSamples; i++){
-      f << t << "\t" << _samples[i] << "\n";
+      f << std::scientific << std::setprecision(4)  << t << "\t" << _samples[i] << "\n";
       t	+= dt;
     }
   }

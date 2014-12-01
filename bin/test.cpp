@@ -728,41 +728,6 @@ int main(int argc, char **argv){
   std::cout << "------------------------------\n";
   std::cout << "[STATUS] "<< "plot individual measurements" << std::endl;
   
-  //--------------- plot baseline averages
-  // plot individual measurements and the average to check correctness of the average
-  // plot also the difference between the averages
-  
-  for(measMap_t::const_iterator type_itr=baselinesMap.begin();  // loop over different baseline types
-      type_itr!=baselinesMap.end();
-      type_itr++){
-
-    std::string typeName=type_itr->first;
-    TMultiGraph baselineGraphs;
-    baselineGraphs.SetName((typeName+"_baselinesAverage").c_str()); // set the name of the type
-    baselineGraphs.SetTitle(typeName.c_str()); // set the name of the type
-    
-    for(TCTmeasurementsCollection_t::const_iterator v_itr=type_itr->second.begin(); // loop over baselines of the same type
-    	v_itr!=type_itr->second.end();
-    	v_itr++){
-
-      // the average baseline is obtained averaging over all bias voltages assuming no difference among them
-      for(unsigned int i=0; i < v_itr->size(); i++){ // loop over all bias voltages
-	TGraph *gg = v_itr->GetWaveForm(i,"",""); //
-	baselineGraphs.Add(gg, "p");
-      }
-    }
-    
-    TGraphErrors *gg = baselineMap[typeName].GetAverageWaveForm(typeName,"average");
-    //std::cout << gg->GetN() << std::endl;
-    gg->SetLineColor(kBlue);
-    gg->SetFillColor(kAzure-4);
-    gg->SetLineWidth(1);
-    baselineGraphs.Add(gg,"l3");
-    baselineGraphs.Draw("A");
-    baselineGraphs.GetXaxis()->SetTitle("time [s]");
-    baselineGraphs.GetYaxis()->SetTitle("I [A]");
-    baselineGraphs.Write();
-  }  
   
   if(vm.count("onlyBaselines")) return 0;
 
@@ -777,6 +742,10 @@ int main(int argc, char **argv){
   for(measMap_t::const_iterator type_itr=referencesMap.begin(); // loop over all references' types
       type_itr!=referencesMap.end();
       type_itr++){
+
+    std::ofstream f(outDir+"/"+type_itr->first+"/spectra_baseline.dat");
+
+    // root
     TMultiGraph baselineGraphs;
     baselineGraphs.SetName((type_itr->first+"_spectra_baseline").c_str());
     baselineGraphs.SetTitle(parser.GetLegend((type_itr->first)).c_str());
@@ -790,6 +759,10 @@ int main(int argc, char **argv){
 	gg->SetLineStyle(2);
 	baselineGraphs.Add(gg, "l");
       }
+
+    // gnuplot
+      v_itr->DumpAllSpectra(f);
+
     }
     // TH2F h("paletteHist","",2000,-1000,1000,100,0,100);    
     // for(float val=-1000; val<=1000; val+=10){
@@ -905,10 +878,14 @@ int main(int argc, char **argv){
     	v_itr++){
       std::string basName = (parser.find(m_itr->first))->second.GetBaseline();
 
+      std::ofstream f(outDir+"/"+m_itr->first+"/biasSpectra.dat");
+      std::ofstream f_bas(outDir+"/"+m_itr->first+"/biasSpectra_baseline.dat");
       // subtract the baseline 
       //      std::cout << (parser.find(m_itr->first))->second.type << "\t" << basName << "\t" << std::endl;
       if(baselineMap.count(basName)!=0){
+	(*v_itr).DumpAllSpectra(f_bas);
 	(*v_itr) -= baselineMap[basName].GetAverageMeasurement();
+	(*v_itr).DumpAllSpectra(f);
       }
 	for(auto spec_itr = v_itr->begin(); spec_itr!=v_itr->end(); spec_itr++){ // loop over all the bias voltages
 	  TCTspectrum& spec = spec_itr->second;
@@ -953,8 +930,13 @@ int main(int argc, char **argv){
   for(measMap_t::const_iterator m_itr=irradiatedsMap.begin();  // loop over different measurements
       m_itr!=irradiatedsMap.end();
       m_itr++){
+    std::ofstream f(outDir+"/"+m_itr->first+"/spectra.dat");
     irradiatedMap[m_itr->first]=TCTmeasurements(); // declare the new irradiate (will be the average)
     irradiatedMap[m_itr->first].Average(m_itr->second,true); // assign the average over all the measurements of the same type
+    
+    // gnuplot
+    irradiatedMap[m_itr->first].DumpAllSpectra(f);
+
     //irradiateMap[m_itr->first]=m_itr->second[0]; // take the first one for the moment 
   }
 
