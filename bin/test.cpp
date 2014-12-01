@@ -699,81 +699,44 @@ int main(int argc, char **argv){
 
   // make the average over measurements of the same type for the baselines
   float RMS=0.;
-  for(measMap_t::iterator m_itr=baselinesMap.begin();  // loop over different baselines
+  for(auto m_itr=baselinesMap.begin();  // loop over different baseline measurements
       m_itr!=baselinesMap.end();
       m_itr++){
-
-    // set the palette
-    for(TCTmeasurementsCollection_t::iterator v_itr=m_itr->second.begin(); // loop over measurements of the same type
-	v_itr!=m_itr->second.end();
-	v_itr++){
-      v_itr->SetPaletteColor(fPaletteColor, 50);
-    }
-
     baselineMap[m_itr->first]=TCTmeasurements(); // declare the new baseline (will be the average)
     baselineMap[m_itr->first].Average(m_itr->second,false); // assign the average over all the measurements of the same type
   }
 
 
-
-  std::cout << "[STATUS] " << "Checking baselines compatibility" << std::endl;
   // for every baseline type make the average of all the measurements
+  std::cout << "[STATUS] " << "Checking baselines compatibility" << std::endl;
   
   if(checkCompatiblityGnuplot(baselinesMap, outDir+"/baselines", RMS)) 
     std::cout << "[INFO] Baselines compatiblity... [OK]" << std::endl;
 
-  // if(checkCompatiblity(baselinesMap, "checkBaselines", RMS)) 
-  //   std::cout << "[INFO] Baselines compatiblity... [OK]" << std::endl;
+  if(vm.count("onlyBaselines")) return 0;
   
   std::cout << "------------------------------\n";
-  std::cout << "[STATUS] "<< "plot individual measurements" << std::endl;
-  
-  
-  if(vm.count("onlyBaselines")) return 0;
-
-
   std::cout << "[INFO] " << "Setting baselines' pointers" << std::endl;
   SetBaselines(referencesMap, baselineMap, parser);
   SetBaselines(irradiatedsMap, baselineMap, parser);
 
-  
+  std::cout << "------------------------------\n";
   std::cout << "[STATUS] Plotting all the references" << std::endl;
   //--------------- plot of all the references
-  for(measMap_t::const_iterator type_itr=referencesMap.begin(); // loop over all references' types
+  for(auto type_itr=referencesMap.begin(); // loop over all references' types
       type_itr!=referencesMap.end();
       type_itr++){
 
     std::ofstream f(outDir+"/"+type_itr->first+"/spectra_baseline.dat");
 
-    // root
-    TMultiGraph baselineGraphs;
-    baselineGraphs.SetName((type_itr->first+"_spectra_baseline").c_str());
-    baselineGraphs.SetTitle(parser.GetLegend((type_itr->first)).c_str());
-    for(TCTmeasurementsCollection_t::const_iterator v_itr=type_itr->second.begin(); // loop over references of the same type
+    for(auto v_itr=type_itr->second.begin(); // loop over references of the same type
     	v_itr!=type_itr->second.end();
     	v_itr++){
-      // plot all the bias voltage on the same canvas
-      for(unsigned int i=0; i < v_itr->size(); i++){ // loop over all bias voltage
-	TGraph *gg = v_itr->GetWaveForm(i,"",""); //
-	gg->SetLineColor(fPaletteColor[i]);
-	gg->SetLineStyle(2);
-	baselineGraphs.Add(gg, "l");
-      }
 
     // gnuplot
       v_itr->DumpAllSpectra(f);
 
     }
-    // TH2F h("paletteHist","",2000,-1000,1000,100,0,100);    
-    // for(float val=-1000; val<=1000; val+=10){
-    //   h.Fill(val,0.,val);
-    // }
-    // h.Write();
-    baselineGraphs.Draw("A");
-    baselineGraphs.GetXaxis()->SetTitle("time [s]");
-    baselineGraphs.GetYaxis()->SetTitle("I [A]");
-    baselineGraphs.GetXaxis()->SetRangeUser(timeMin,timeMin+3e-8);
-    baselineGraphs.Write();
   }    
 
   //--------------- remove baseline from reference and plot them

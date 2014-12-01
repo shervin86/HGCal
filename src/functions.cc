@@ -83,8 +83,8 @@ bool checkCompatiblityGnuplot(measMap_t &baselinesMap, std::string outDir, float
 	    << std::endl;
   // take one measurement as reference
   TCTmeasurements baselinesDiffRef = newBaselines.begin()->second; // init the baselineDiff: take the first as reference
-  std::cout << "[INFO] BaselineDiffRef bias voltage: " << baselinesDiffRef.GetSpectrum(baselinesDiffRef.size()-1).GetBias() << std::endl;
-  std::cout << std::endl;
+  //std::cout << "[INFO] BaselineDiffRef bias voltage: " << baselinesDiffRef.GetSpectrum(baselinesDiffRef.size()-1).GetBias() << std::endl;
+  //std::cout << std::endl;
   std::cout << "measurement\tmean\tstd.dev.\tavg std. dev." << std::endl;
 
   for(measurementMap_t::const_iterator itr = newBaselines.begin();
