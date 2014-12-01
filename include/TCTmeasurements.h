@@ -140,6 +140,9 @@ class TCTmeasurements{
 
   TGraph *GetWaveForm(unsigned int index, std::string graphName, std::string graphTitle)const;
   TMultiGraph *GetAllSpectra(std::string graphName, std::string graphTitle)const; ///< plot all the spectra 
+  void DumpAllSpectra(std::ostream& fout) const; ///< dump all spectra in a txt file to be plotted with gnuplot 
+  void DumpAverage(std::ostream& fout) const; ///< dump average spectrum with RMS
+
   TGraphErrors *GetAverageWaveForm(std::string graphName, std::string graphTitle) const; ///< Graph with average of the spectra, error=std.dev.
 
   void SetPaletteColor(int *palette, unsigned int size){
@@ -352,6 +355,19 @@ class TCTmeasurements{
     assert(_isAverage);
     return acquisitionAverage;
   }
+
+ /// Return the average spectrum RMS
+  TCTspectrum& GetAverageMeasurementRMS(){
+    assert(_isAverage);
+    return acquisitionAverageRMS;
+  }
+
+ /// Return the average spectrum RMS
+  const TCTspectrum& GetAverageMeasurementRMS() const{
+    assert(_isAverage);
+    return acquisitionAverageRMS;
+  }
+
 
 
   TGraph *GetWaveForm(const_iterator itr, std::string graphName, std::string graphTitle)const;

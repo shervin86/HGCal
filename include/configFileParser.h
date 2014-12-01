@@ -26,6 +26,7 @@ class configFileContent{
   type("nan"),
     diodeName("nan"),
     irradiation("nan"),
+    annealing("nan"),
     temp("nan"),
     TCTdate("nan"),
     TCTreference("nan"),
@@ -44,6 +45,7 @@ class configFileContent{
   std::string type, ///< type of measurement
     diodeName, ///< name of the diode 
     irradiation, ///< fluence
+    annealing,   ///< annealing
     temp, ///< temperature of the measurement
     TCTdate, ///< date of the TCT measurement
     TCTreference, ///< name of the diode used as reference
@@ -74,7 +76,8 @@ class configFileContent{
     legend+=irradiation;
     legend+=" cm^{-2}, ";
     legend+=GetTemperatureString();
-    legend+=" C";
+    legend+=" C, ";
+    legend+=GetAnnealingString();
     return legend;
   }
 
@@ -97,9 +100,10 @@ class configFileContent{
   inline float GetTemperature(void)const{ return std::stof(temp);};
   inline std::string GetTemperatureString(void)const{ return temp;};
   inline std::string GetFluence(void)const{ return irradiation;};
+  inline std::string GetAnnealingString(void)const{ return annealing;};
 
   configFileContent& operator<<(std::ostream& f){
-    f << type << "\t" << diodeName << "\t" << irradiation << "\t" << GetThickness() << "\t" << GetTemperature()
+    f << type << "\t" << diodeName << "\t" << irradiation << "\t" << GetAnnealingString() << "\t" << GetThickness() << "\t" << GetTemperature()
       << "\t" << Vdep_CV
       << "\t" << Vdep_IV
       << "\t" << Vdep_TCT
@@ -113,7 +117,7 @@ class configFileContent{
   }
       
   void intestazione(std::ostream& f){
-    f << "ID\t" << "\t" << "diodeName" << "\t" << "\tfluence" << "\t" << "Thick" << "\t" << "Temp"
+    f << "ID\t" << "\t" << "diodeName" << "\t" << "\tfluence" << "\tannealing" << "\t" << "Thick" << "\t" << "Temp"
       << "\t" << "Vdep_CV"
       << "\t" << "Vdep_IV"
       << "\t" << "Vdep_TCT"
@@ -151,6 +155,7 @@ irr1	FZ320P_01_DiodeL_11    4e14		-20		21/08/2014-16:26	ref1		bas1		-      -    
 	  >> type 
 	  >>  diodeName 
 	  >>  irradiation 
+	  >>  annealing
 	  >>  temp  
 	  >>  TCTdate 
 	  >>  TCTreference 
@@ -278,6 +283,9 @@ class configFileParser{
     return iter->second.GetTemperatureString();
   }
 
+  inline std::string GetAnnealingString(lines_t::const_iterator iter)const{
+    return iter->second.GetAnnealingString();
+  }
 
   inline std::string GetLegend(std::string type) const{
     auto iter = find(type);
@@ -390,9 +398,10 @@ class configFileParser{
   }
 
   void SetIrev(std::string type, float value, float valueError){
-    auto itr = find(type);
+    auto  itr = find(type);
     itr->second.Irev=value;
-    itr->second.Irev=valueError;
+    itr->second.IrevError=valueError;
+    //    std::cout << "val = " <<  value << "\t" << itr->second.Irev << std::endl;
   }
 
   void SetVdepCV(std::string type, float value, float valueError){

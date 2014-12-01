@@ -2,6 +2,29 @@
 #include <iostream>
 #include <TString.h>
 #include <TAxis.h>
+#include <iomanip>
+
+void TCTspectrum::dump(std::ostream& f, std::string legend, const TCTspectrum *rmsSpectrum) const{
+  float	dt = GetTimeScanUnit();
+  float	t  = 0;
+  f<< "time\tsample\t";
+  if(rmsSpectrum!=NULL) f << "stdDev\t";
+  f << legend << "\n";
+
+  if(rmsSpectrum!=NULL){
+      
+    for(unsigned int i=0; i< _nSamples; i++){
+      f << std::scientific << std::setprecision(4) << t << "\t" << _samples[i] << "\t" << rmsSpectrum->GetSamples()[i] << "\n";
+      t	+= dt;
+    }
+  }else {
+    for(unsigned int i=0; i< _nSamples; i++){
+      f << t << "\t" << _samples[i] << "\n";
+      t	+= dt;
+    }
+  }
+  f<< std::endl;
+}
 
 TCTspectrum TCTspectrum::operator- (const TCTspectrum& rhs) const{
     TCTspectrum newSpectrum(*this); // copy to have the informations

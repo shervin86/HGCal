@@ -27,30 +27,6 @@ TCTspectrum TCTmeasurements::GetAverage(bool checkBias)const{
 
 
 
-// TCTspectrum TCTmeasurements::Sum(bool checkBias)const{ 
-//   assert(checkBias==false); /// \todo implement the case of biasCheck
-//   TCTspectrum meas=acquisition[0];
-//   meas.clear(); // reset the values
-//   for(TCTspectrumCollection_t::const_iterator itr = acquisition.begin();
-//       itr!=acquisition.end();
-//       itr++){
-//     meas+=*itr;
-//   }
-//   return meas;
-// }
-
-// TCTspectrum TCTmeasurements::Sum2(bool checkBias)const{ 
-//   assert(checkBias==false); /// \todo implement the case of biasCheck
-//   TCTspectrum meas=acquisition[0];
-//   meas.clear(); // reset the values
-//   for(TCTspectrumCollection_t::const_iterator itr = acquisition.begin();
-//       itr!=acquisition.end();
-//       itr++){
-//     meas+=*itr * *itr;
-//   }
-//   return meas;
-// }
-
 //average over several measuremets 
 void TCTmeasurements::Average(std::vector<TCTmeasurements> others, bool checkBias){
   _isAverage=true;
@@ -174,6 +150,22 @@ TGraph *TCTmeasurements::GetWaveForm(unsigned int index, std::string graphName, 
   std::advance(itr, index);
   return GetWaveForm(itr, graphName, graphTitle);
 };
+
+void TCTmeasurements::DumpAllSpectra(std::ostream& fout) const{
+  for(auto itr=begin(); itr!=end(); itr++){ // loop over all bias voltages
+    char title[100];
+    sprintf(title, "\"U = %.0f V\"", itr->first); 
+    itr->second.dump(fout, title);
+    fout << "\n";
+  }
+}
+
+
+void TCTmeasurements::DumpAverage(std::ostream& fout) const{
+  GetAverageMeasurement().dump(fout, "average", &(GetAverageMeasurementRMS()));
+  fout << std::endl;
+}
+
 
 TMultiGraph *TCTmeasurements::GetAllSpectra(std::string graphName, std::string graphTitle)const{ 
   

@@ -64,6 +64,71 @@ measurementMap_t splitMeasurements(measMap_t m){
   return newMap;
 }
 
+
+// return true if ok
+bool checkCompatiblityGnuplot(measMap_t &baselinesMap, std::string outDir, float& RMS){
+  if(baselinesMap.empty()) return true;
+  RMS=0;
+  bool returnValue=false;
+
+  //make a new map, separating the measurements of the same type
+  measurementMap_t newBaselines = splitMeasurements(baselinesMap);
+  
+  std::cout << "[INFO] Checking baselines compatibility...\n" 
+	    << "  - Take one baseline as reference\n" 
+	    << "  - For each baseline measurement (several bias voltages applied), take the average\n"
+	    << "  - Subtract the reference baseline\n"
+	    << "  - All baseline measurements (average over several bias voltages) should have mean=0 or compatbile with 0 within std. dev.\n" 
+	    << "  - Std. dev. = electronic noise" 
+	    << std::endl;
+  // take one measurement as reference
+  TCTmeasurements baselinesDiffRef = newBaselines.begin()->second; // init the baselineDiff: take the first as reference
+  std::cout << "[INFO] BaselineDiffRef bias voltage: " << baselinesDiffRef.GetSpectrum(baselinesDiffRef.size()-1).GetBias() << std::endl;
+  std::cout << std::endl;
+  std::cout << "measurement\tmean\tstd.dev.\tavg std. dev." << std::endl;
+
+  for(measurementMap_t::const_iterator itr = newBaselines.begin();
+      itr!=newBaselines.end();
+      itr++){
+
+    // name of the output file with the spectra
+    std::ofstream f(outDir+"/"+itr->first+"-spectra.dat");
+    if(f.fail()){
+      std::cerr << "[ERROR] File " << outDir+"/"+itr->first+"-spectra.dat" << " not opened" << std::endl;
+      exit(1);
+    }
+    // calculate the average with std. dev.
+    std::vector<TCTmeasurements> TCTmeasVec;
+    TCTmeasVec.push_back(itr->second);
+    TCTmeasurements avg(itr->second);
+    avg.Average(TCTmeasVec);
+    
+    avg.DumpAverage(f); // dump the average on the file
+
+    itr->second.DumpAllSpectra(f); // dump all the other spectra
+
+    // calculate mean, standard deviation
+    TCTspectrum spec=avg.GetAverageMeasurement();
+    TCTspectrum specRMS=avg.GetAverageMeasurementRMS();
+
+    float mean = spec.GetMean(0.,1e10); //full range
+    float rms  = spec.GetRMS(0.,1e10);
+    unsigned int n=spec.GetNsamples(0.,1e10);
+    RMS=specRMS.GetMean(0.,1e10);
+
+    std::cout << std::setprecision(2) << std::setw(12) << itr->first << "\t" << mean << " +/- " << rms/sqrt(n)
+	      << "\t" << RMS << std::endl;
+    
+    // check that baselines are compatible
+    //assert(abs(mean)<rms); 
+    returnValue = abs(mean)<rms;
+  }
+  //RMS/=(index+index2);
+
+  return returnValue;
+};
+
+
 // return true if ok
 bool checkCompatiblity(measMap_t &baselinesMap, std::string checkName, float& RMS){
   if(baselinesMap.empty()) return true;

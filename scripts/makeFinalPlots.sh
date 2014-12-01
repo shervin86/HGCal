@@ -4,9 +4,12 @@ ptypes=`cut -d ' ' -f 1 $fileP | cut -f 1 |grep -v '#' | grep -v 'bas' | grep -v
 ntypes=`cut -d ' ' -f 1 $fileN | cut -f 1 |grep -v '#' | grep -v 'bas' | grep -v 'rbl' | sort | uniq`
 #echo $ntypes
 #echo $ptypes
+if [ "$#" -gt 0 ]; then
+    BIAS=$1;
+fi
+BIAS=${1:-1000}
 
-BIAS=1000
-BIAS=600
+#BIAS=600
 #BIAS=800
 #BIAS=900
 cat > tmp/awk.awk <<EOF
@@ -75,15 +78,15 @@ mv IV.pdf IV-n.pdf
 
 
 
-TEMP=-30
-cat tmp/head | sed 's|LEGEND|p-type, -30C|'> tmp/p-30-${BIAS}.dat
+TEMP=-20
+cat tmp/head | sed 's|LEGEND|p-type, -20C|'> tmp/p-30-${BIAS}.dat
 for type in $ptypes
 do
     file=result/$type/result.dat
 awk -v TEMP=${TEMP} -v BIAS=${BIAS} -f tmp/awk.awk ${file} >> tmp/p-30-${BIAS}.dat
 done
 
-cat tmp/head | sed 's|LEGEND|n-type, -30c|'> tmp/n-30-${BIAS}.dat
+cat tmp/head | sed 's|LEGEND|n-type, -20c|'> tmp/n-30-${BIAS}.dat
 for type in $ntypes
 do
     file=result/$type/result.dat
@@ -91,7 +94,7 @@ awk -v TEMP=${TEMP} -v BIAS=${BIAS} -f tmp/awk.awk ${file} >> tmp/n-30-${BIAS}.d
 done
 
 gnuplot -e "set title 'Charge collection efficiency \@${BIAS} V" -e "call 'macro/cceFinal.gnu' 'tmp/p-30-${BIAS}.dat' 'tmp/n-30-${BIAS}.dat'"
-mv CCE.pdf CCE-pn.pdf
+mv CCE.pdf CCE-pn-${BIAS}.pdf
 
 gnuplot -e "set title 'Bulk current \@${BIAS} V" -e "call 'macro/ivFinal.gnu' 'tmp/p-30-${BIAS}.dat' 'tmp/n-30-${BIAS}.dat'"
-mv IV.pdf IV-pn.pdf
+mv IV.pdf IV-pn-${BIAS}.pdf

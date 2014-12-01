@@ -246,6 +246,7 @@ void SetIV(configFileParser& parser, IVMap_t ivmap){
     float IrevError = iv.GetIrevError();
     parser.SetVdepIV(type, Vdep, 0.);
     parser.SetIrev(type, Irev, IrevError);
+    std::cout << Irev << "\t" << IrevError << std::endl;
   }
 }
 
@@ -357,7 +358,7 @@ int main(int argc, char **argv){
     ("spectrumDump", po::value< float>(&spectrumDumpBias), "bias voltage")
     ;
   outputOption.add_options()
-    ("outDir", po::value<std::string>(&outDir),"")
+    ("outDir", po::value<std::string>(&outDir)->default_value("result"),"")
     ("imgFormat", po::value<std::string>(&imgFormat)->default_value("eps"),"")
     ("timeMin", po::value<float>(&timeMin)->default_value(0.085e-6),"")
     ("timeMax", po::value<float>(&timeMax)->default_value(0.096e-6),"")
@@ -686,7 +687,8 @@ int main(int argc, char **argv){
     g->SetTitle(parser.GetLegend(type).c_str());
     g->Write();
     } 
-  SetIV(parser, ivMap);
+    SetIV(parser, ivMap);
+    SetIV(parser, ivGRMap);
   //SetIVGR(parser, ivGRMap);
 
   }
@@ -717,8 +719,11 @@ int main(int argc, char **argv){
   std::cout << "[STATUS] " << "Checking baselines compatibility" << std::endl;
   // for every baseline type make the average of all the measurements
   
-  if(checkCompatiblity(baselinesMap, "checkBaselines", RMS)) 
+  if(checkCompatiblityGnuplot(baselinesMap, outDir+"/baselines", RMS)) 
     std::cout << "[INFO] Baselines compatiblity... [OK]" << std::endl;
+
+  // if(checkCompatiblity(baselinesMap, "checkBaselines", RMS)) 
+  //   std::cout << "[INFO] Baselines compatiblity... [OK]" << std::endl;
   
   std::cout << "------------------------------\n";
   std::cout << "[STATUS] "<< "plot individual measurements" << std::endl;

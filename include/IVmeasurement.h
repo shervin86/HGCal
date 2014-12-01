@@ -68,11 +68,14 @@ class IVmeasurement{
     _bias[_nSamples]=bias; // add the new value and then increment the counter
     _current[_nSamples]=current; // add the new value and then increment the counter
     _guardCurrent[_nSamples]=guardCurrent; // add the new value and then increment the counter
-    //std::cout << "* " << _bias[_nSamples] << "\t" << _current[_nSamples] << "\t" << std::endl;
+    //std::cout << "* " << _bias[_nSamples] << "\t" << _current[_nSamples] << "\t" << guardCurrent << std::endl;
     _nSamples++;
     float fbias=fabs(bias);
-    __current[fbias]=current;
-    __guardCurrent[fbias]=guardCurrent;
+    __current[fbias]= std::pair<float, float>(current, guardCurrent);
+    //std::cout << fbias << "\t" << __current[fbias].first << "\t" << __current[fbias].second << std::endl;
+    //    __guardCurrent[fbias]=guardCurrent;
+      _Irev=__current.rbegin()->second.first;    
+      _IrevError=__current.rbegin()->second.second;    
   };
 
 
@@ -169,7 +172,6 @@ class IVmeasurement{
     unsigned int n = g->GetN();
     int min=0;
     int max=n-1;
-      
 
     TFitResultPtr p = g->Fit("pol1","QS");
     TF1 *f = g->GetFunction("pol1");
@@ -187,6 +189,8 @@ class IVmeasurement{
     _Irev=p->GetParams()[0];
     _IrevError=p->GetErrors()[0];
     
+    _Irev=__current.rbegin()->second.first;
+    _IrevError = __current.rbegin()->second.second;
   }
 
   inline float GetVdep(void) const{ return _Vdep; }
@@ -199,7 +203,7 @@ class IVmeasurement{
   /// float fbias=itr->first; 
   /// float current = itr->second; \endcode
   /// @{
-  typedef std::map<float, float> valueMap_t;
+  typedef std::map<float, std::pair<float, float> > valueMap_t;
   typedef valueMap_t::const_iterator  const_iterator;
   typedef valueMap_t::iterator        iterator;
 
@@ -207,11 +211,6 @@ class IVmeasurement{
   const_iterator end()const{  return __current.end();  };
   iterator       begin(){     return __current.begin();};
   iterator       end(){       return __current.end();  };
-
-  const_iterator beginGR()const{return __guardCurrent.begin();}; 
-  const_iterator endGR()const{  return __guardCurrent.end();  };
-  iterator       beginGR(){     return __guardCurrent.begin();};
-  iterator       endGR(){       return __guardCurrent.end();  };
 
   /// return iterator to the spectrum with given bias voltage (absolute value), or to end()
   const_iterator operator[](float bias) const{
@@ -230,24 +229,6 @@ class IVmeasurement{
     if(fabs(iter->first-fbias)<1e-2) return iter;
     return end();
   }
-
-  const_iterator find(float bias, bool guardRing)const{
-    float fbias=fabs(bias);
-    auto iter = guardRing ? (__guardCurrent.upper_bound(fbias)) : (__current.upper_bound(fbias));
-    if(iter==begin()) return end();
-    iter--;
-    if(fabs(iter->first-fbias)<1e-2) return iter;
-    return end();
-  }
-  iterator find(float bias, bool guardRing){
-    float fbias=fabs(bias);
-    auto iter = guardRing ? (__guardCurrent.upper_bound(fbias)) : (__current.upper_bound(fbias));
-    if(iter==begin()) return end();
-    iter--;
-    if(fabs(iter->first-fbias)<1e-2) return iter;
-    return end();
-  }
-
   ///@}
     
  protected:

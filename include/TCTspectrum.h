@@ -168,16 +168,7 @@ class TCTspectrum: public TCTspectrumBase{
   ///@{
   
   /// dump spectrum on text file to be plotted with gnuplot
-  inline void dump(std::ostream& f){
-    float dt=GetTimeScanUnit();
-    float t=0;
-    f<< "time\tsample" << std::endl;
-    for(unsigned int i=0; i< _nSamples; i++){
-      f << t << "\t" << _samples[i] << "\n";
-      t+=dt;
-    }
-   f<< std::endl;
-  }
+  void dump(std::ostream& f, std::string legend="", const TCTspectrum *rmsSpectrum=NULL) const;
 
  private:
   bool _noisy;

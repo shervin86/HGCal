@@ -13,7 +13,7 @@
 // };
 
 std::ostream& diode::dump(std::ostream& f){
-  f<< "thick\tarea\tfluence\ttemp\tbias\tQref\t\tQ\t\tCCE\t\tIV\t\tCV455\t\tCV1M\t\tIVGR\t\tCV455GR\t\tCV1MGR";
+  f<< "thick\tarea\tfluence\ttemp\tbias\tQref\t\tQ\t\tCCE\t\tIV\t\tIVGR\t\tIGR\t\tCV455\t\tCV1M\t\tCV455GR\t\tCV1MGR";
   f<< "\t" << _id << "\t\"" << _property.GetLegend()<< "\""<< "\t" << _property.GetThickness() << "\t" << _property.GetFluence() << "\t" << _property.GetTemperatureString() 
    << std::endl;
 
@@ -63,8 +63,13 @@ std::ostream& diode::dump(std::ostream& f){
     }  else f<< "\t\t-\t\t-";
       
     auto ivItr=_iv[bias];
-    if(ivItr!=_iv.end()) f<< "\t" << ivItr->second;
+    if(ivItr!=_iv.end()) f<< "\t" << ivItr->second.first;
     else f<<"\t-";
+
+
+    auto ivGRItr=_ivGR[bias];
+    if(ivGRItr!=_ivGR.end()) f<< "\t" << ivGRItr->second.first << "\t" << ivGRItr->second.second;
+    else f<<"\t-\t-";
 
     auto cvItr=_cv[bias];
     if(cvItr!=_cv.end()){
@@ -72,11 +77,6 @@ std::ostream& diode::dump(std::ostream& f){
       f<< "\t" << cvItr->second[_cv.MaxFreqIndex()];
     } else f<<"\t-\t-";
 
-
-
-    auto ivGRItr=_ivGR[bias];
-    if(ivGRItr!=_ivGR.end()) f<< "\t" << ivGRItr->second;
-    else f<<"\t-";
 
     auto cvGRItr=_cvGR[bias];
     if(cvGRItr!=_cvGR.end()){
