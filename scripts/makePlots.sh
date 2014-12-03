@@ -6,15 +6,17 @@ OUTDIR=result
 
 
 
-for file in ${OUTDIR}/*/result.dat
+for file in ${OUTDIR}/irr*/result.dat
 do
     echo $file
-    #gnuplot -e "call \"g.gnu\" \"${file}\" \"${fout}\" \"${EXT}\""
-   fout=`dirname $file`/`basename $file .dat`-cce.${EXT}
-   gnuplot  -e " call \"macro/cce.gnu\" \"${file}\"" -e " @TERMCH ${EXT}" -e "@OUTPUT \"${fout}\" "
 
    fout=`dirname $file`/`basename $file .dat`-iv.${EXT}
    gnuplot -e " call \"macro/iv.gnu\" \"${file}\"" -e " @TERMCH ${EXT}" -e "@OUTPUT \"${fout}\" "
+
+   fout=`dirname $file`/`basename $file .dat`-cce.${EXT}
+   gnuplot  -e " call \"macro/cce.gnu\" \"${file}\"" -e " @TERMCH ${EXT}" -e "@OUTPUT \"${fout}\" "
+
+
 
     fout=`dirname $file`/`basename $file .dat`-cv.${EXT}
     #gnuplot -e " call \"macro/cv455.gnu\" \"${file}\"" -e " @TERMCH ${EXT}" -e "@OUTPUT \"${fout}\" "
@@ -23,8 +25,18 @@ do
    fout=`dirname $file`/`basename $file .dat`-cce_cv_iv.${EXT}
    gnuplot -e " call \"macro/cce_cv_iv.gnu\" \"${fout}\" \"${file}\"" #-e " @TERMCH png" -e "@OUTPUT \"${fout}\" "
 
-#    fout=`dirname $file`/`basename $file .dat`-cce_div_cv.${EXT}
-#    gnuplot -e " call \"macro/cce_div_cv.gnu\" \"${fout}\" \"${file}\"" #-e " @TERMCH png" -e "@OUTPUT \"${fout}\" "
+done
+
+
+
+exit 0
+for file in ${OUTDIR}/*/spectra.dat
+do
+    echo $file
+    #gnuplot -e "call \"g.gnu\" \"${file}\" \"${fout}\" \"${EXT}\""
+   fout=`dirname $file`/`basename $file .dat`.${EXT}
+   foutCumul=`dirname $file`/`basename $file .dat`-cumul.${EXT}
+   gnuplot  -e " call \"macro/biasSpectra.gnu\" \"${file}\" \"${fout}\" \"${foutCumul}\" "
 done
 
  exit 0

@@ -87,6 +87,7 @@ bool checkCompatiblityGnuplot(measMap_t &baselinesMap, std::string outDir, float
   //std::cout << std::endl;
   std::cout << "measurement\tmean\tstd.dev.\tavg std. dev." << std::endl;
 
+  unsigned int num_baselines=0;
   for(measurementMap_t::const_iterator itr = newBaselines.begin();
       itr!=newBaselines.end();
       itr++){
@@ -114,7 +115,9 @@ bool checkCompatiblityGnuplot(measMap_t &baselinesMap, std::string outDir, float
     float mean = spec.GetMean(0.,1e10); //full range
     float rms  = spec.GetRMS(0.,1e10);
     unsigned int n=spec.GetNsamples(0.,1e10);
-    RMS=specRMS.GetMean(0.,1e10);
+
+    RMS+=specRMS.GetMean(0.,1e10);
+    num_baselines++;
 
     std::cout << std::setprecision(2) << std::setw(12) << itr->first << "\t" << mean << " +/- " << rms/sqrt(n)
 	      << "\t" << RMS << std::endl;
@@ -123,7 +126,8 @@ bool checkCompatiblityGnuplot(measMap_t &baselinesMap, std::string outDir, float
     //assert(abs(mean)<rms); 
     returnValue = abs(mean)<rms;
   }
-  //RMS/=(index+index2);
+  RMS/=num_baselines;
+  std::cout << "[INFO] RMS=" << RMS << std::endl;
 
   return returnValue;
 };
@@ -252,10 +256,11 @@ bool checkMeasurementBaseline(float RMS, float signalStart, float signalEnd, mea
       // 	spec-=mean;
       // 	mean=spec.GetMean(0.,signalStart);
       // }
+	
       if(rms>RMS*1.5 || (fabs(mean)>2*meanError)){
 	if(fabs(spec.GetBias())>100) returnValue=false; 
        
-	if(rms>RMS*1.5){ // || returnValue==false){
+	if(rms>RMS*4){ // || returnValue==false){
 	  spec.SetNoisy();
 	  std::cout << std::setprecision(2) <<std::setw(9)
 		    << itr->first << "\t" << mean << " +/- " << meanError

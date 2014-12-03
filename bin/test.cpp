@@ -3,6 +3,7 @@
 #include <iomanip>
 //#include <fstream>
 #include <boost/program_options.hpp>
+
 #include "configFileParser.h"
 
 #include "TCTmeasurements.h"
@@ -578,7 +579,7 @@ int main(int argc, char **argv){
 
   std::cout << "[INFO] Spectrum integration range: " << timeMin << " - " << timeMax << std::endl;
  
-  TFile outFile("outFile.root","RECREATE");
+  TFile outFile("/tmp/outFile.root","RECREATE");
   outFile.cd();
   TCanvas *c1 = new TCanvas("c1","");
 
@@ -727,33 +728,28 @@ int main(int argc, char **argv){
       type_itr!=referencesMap.end();
       type_itr++){
 
-    std::ofstream f(outDir+"/"+type_itr->first+"/spectra_baseline.dat");
-
+    std::string dir=outDir+"/"+type_itr->first;
+    system(("[ -d "+dir+" ] || mkdir -p "+dir).c_str());
+    
+    std::ofstream f(dir+"/spectra_baseline.dat");
+    if(f.fail()){
+      std::cerr << "[ERROR] File: " << outDir+"/"+type_itr->first+"/spectra_baseline.dat" << " not opened" << std::endl;
+      exit(1);
+    }
     for(auto v_itr=type_itr->second.begin(); // loop over references of the same type
     	v_itr!=type_itr->second.end();
     	v_itr++){
-
-    // gnuplot
       v_itr->DumpAllSpectra(f);
-
     }
+    f.close();
   }    
 
   //--------------- remove baseline from reference and plot them
-  TMultiGraph fixedBiasGraphs;
-
-  fixedBiasGraphs.SetName(("ref_600")); // put only 600V graphs
-  fixedBiasGraphs.SetTitle(fixedBiasGraphs.GetName());
-  unsigned int fixedIndex=1;
-  for(measMap_t::iterator type_itr=referencesMap.begin();
+  for(auto type_itr=referencesMap.begin();
       type_itr!=referencesMap.end();
       type_itr++){
     
-    TMultiGraph baselineGraphs;
-    baselineGraphs.SetName((type_itr->first+"_spectra").c_str());
-    baselineGraphs.SetTitle(parser.GetLegend(type_itr->first).c_str());
-
-    for(TCTmeasurementsCollection_t::iterator v_itr=type_itr->second.begin(); // loop over references of the same type
+    for(auto v_itr=type_itr->second.begin(); // loop over references of the same type
     	v_itr!=type_itr->second.end();
     	v_itr++){
       // name of the baseline type
@@ -762,50 +758,16 @@ int main(int argc, char **argv){
 	std::cerr << "[WARNING] No baseline defined for " << type_itr->first << std::endl;
       } else {
 	// subtract the baseline 
-	//std::cout << basName << std::endl;
-	//if(!vm.count("noBaselineSubtraction")) (*v_itr) -= baselineMap[basName].GetAverageMeasurement();
 	if(!vm.count("noBaselineSubtraction")) (*v_itr) -= (*v_itr).GetBaseline().GetAverageMeasurement();
+	
 	for(auto spec_itr = v_itr->begin(); spec_itr!=v_itr->end(); spec_itr++){ // loop over all the bias voltages
 	  TCTspectrum& spec = spec_itr->second;
-	  if(spec.empty()) continue; ///\todo check why
-	  float mean = spec.GetMean(0., timeMin);
-	  //	  std::cout << type_itr->first << "\t" << spec_itr->first << "\t" << mean; // << std::endl;
-	  spec-=mean;
-	  //	  std::cout <<  "\t" << spec.GetMean(0., timeMin) << std::endl;
-
-	  //spec-=-5e-3;
+	  //	  if(spec.empty()) continue; ///\todo check why
+	  spec -= spec.GetMean(0., timeMin);
 	} 
       }
-
-      for(unsigned int i=0; i < v_itr->size(); i++){ // loop over all bias voltage	
-	TGraph *gg = v_itr->GetWaveForm(i,"",""); //
-	gg->SetLineColor(fPaletteColor[i]);
-	if(i==v_itr->size()-1){
-	  gg->SetLineColor(kBlack);
-	  gg->SetLineWidth(5);
-	}
-	gg->SetLineStyle(1);
-	baselineGraphs.Add(gg, "l");
-	if(abs(v_itr->GetSpectrum(i).GetBias())==600){
-	  TGraph *gg1 = v_itr->GetWaveForm(i,"",""); //
-       
-	  gg1->SetLineColor(fixedIndex);
-	  gg1->SetLineStyle(1);
-	  fixedBiasGraphs.Add(gg1, "l");
-	  fixedIndex++;
-	}
-
-      }
     }
-    baselineGraphs.Draw("A");
-    baselineGraphs.GetXaxis()->SetTitle("time [s]");
-    baselineGraphs.GetYaxis()->SetTitle("I [A]");
-    baselineGraphs.GetXaxis()->SetRangeUser(timeMin,timeMin+3e-8);
-    baselineGraphs.Write();
-  
-  }
-  fixedBiasGraphs.Write();
-  
+  }  
   //  checkCompatiblity(referencesMap, "checkReferences", RMS);
 
   
@@ -840,9 +802,11 @@ int main(int argc, char **argv){
     	v_itr!=m_itr->second.end();
     	v_itr++){
       std::string basName = (parser.find(m_itr->first))->second.GetBaseline();
+      std::string dir=outDir+"/"+m_itr->first;
+      system(("[ -d "+dir+" ] || mkdir -p "+dir).c_str());
 
-      std::ofstream f(outDir+"/"+m_itr->first+"/biasSpectra.dat");
-      std::ofstream f_bas(outDir+"/"+m_itr->first+"/biasSpectra_baseline.dat");
+      std::ofstream f(dir+"/biasSpectra.dat");
+      std::ofstream f_bas(dir+"/biasSpectra_baseline.dat");
       // subtract the baseline 
       //      std::cout << (parser.find(m_itr->first))->second.type << "\t" << basName << "\t" << std::endl;
       if(baselineMap.count(basName)!=0){
@@ -850,17 +814,18 @@ int main(int argc, char **argv){
 	(*v_itr) -= baselineMap[basName].GetAverageMeasurement();
 	(*v_itr).DumpAllSpectra(f);
       }
-	for(auto spec_itr = v_itr->begin(); spec_itr!=v_itr->end(); spec_itr++){ // loop over all the bias voltages
-	  TCTspectrum& spec = spec_itr->second;
-	  if(spec.empty()) continue; ///\todo check why
-	  float mean = spec.GetMean(0., timeMin);
-	  //	  std::cout << type_itr->first << "\t" << spec_itr->first << "\t" << mean; // << std::endl;
-	  spec-=mean;
-	  //	  std::cout <<  "\t" << spec.GetMean(0., timeMin) << std::endl;
-
-	  //spec-=-5e-3;
+      for(auto spec_itr = v_itr->begin(); spec_itr!=v_itr->end(); spec_itr++){ // loop over all the bias voltages
+	TCTspectrum& spec = spec_itr->second;
+	if(spec.empty()) continue; ///\todo check why
+	float mean = spec.GetMean(0., timeMin);
+	//	  std::cout << type_itr->first << "\t" << spec_itr->first << "\t" << mean; // << std::endl;
+	spec-=mean;
+	//	  std::cout <<  "\t" << spec.GetMean(0., timeMin) << std::endl;
+	
+	//spec-=-5e-3;
 	} 
-
+      f.close();
+      f_bas.close();
       unsigned int i=0;
       for(auto itr=v_itr->begin(); itr!=  v_itr->end(); itr++){ // loop over all bias voltage
 	TGraph *gg = v_itr->GetWaveForm(itr,"",""); //
@@ -893,13 +858,14 @@ int main(int argc, char **argv){
   for(measMap_t::const_iterator m_itr=irradiatedsMap.begin();  // loop over different measurements
       m_itr!=irradiatedsMap.end();
       m_itr++){
+
     std::ofstream f(outDir+"/"+m_itr->first+"/spectra.dat");
     irradiatedMap[m_itr->first]=TCTmeasurements(); // declare the new irradiate (will be the average)
     irradiatedMap[m_itr->first].Average(m_itr->second,true); // assign the average over all the measurements of the same type
     
     // gnuplot
     irradiatedMap[m_itr->first].DumpAllSpectra(f);
-
+    f.close();
     //irradiateMap[m_itr->first]=m_itr->second[0]; // take the first one for the moment 
   }
 

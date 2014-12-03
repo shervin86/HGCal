@@ -7,23 +7,26 @@
 void TCTspectrum::dump(std::ostream& f, std::string legend, const TCTspectrum *rmsSpectrum) const{
   float	dt = GetTimeScanUnit();
   float	t  = 0;
-  f<< "time\tsample\t";
+  f<< "time\tsample\tQ";
   if(rmsSpectrum!=NULL) f << "stdDev\t";
   f << legend << "\n";
 
   f.scientific;
   f.precision(4);
 
-
+  float Q=0;
   if(rmsSpectrum!=NULL){
-      
+
     for(unsigned int i=0; i< _nSamples; i++){
-      f << std::scientific << std::setprecision(4) << t << "\t" << _samples[i] << "\t" << rmsSpectrum->GetSamples()[i] << "\n";
+      Q+=_samples[i];
+      f << std::scientific << std::setprecision(4) << t << "\t" << _samples[i] << "\t" << Q 
+	<< "\t" << rmsSpectrum->GetSamples()[i] << "\t\n";
       t	+= dt;
     }
   }else {
     for(unsigned int i=0; i< _nSamples; i++){
-      f << std::scientific << std::setprecision(4)  << t << "\t" << _samples[i] << "\n";
+      Q+=_samples[i];
+      f << std::scientific << std::setprecision(4) << t << "\t" << _samples[i] << "\t" << Q << "\t\n";
       t	+= dt;
     }
   }

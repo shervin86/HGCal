@@ -9,6 +9,11 @@
 #include <set>
 #include <map>
 #include <sstream>
+#include "TString.h"
+#ifndef __CINT__
+#include <regex>
+#include <boost/regex.hpp>
+#endif
 /** \class configFileContent configFileParser.h include/configFileParser.h
     class containing all the informations provided by one line of the config file
 
@@ -71,6 +76,8 @@ class configFileContent{
   
   inline std::string GetLegend() const{
     std::string legend;
+    legend+=GetType();
+    legend+=" ";
     legend+=GetThickness();
     legend+=" um, ";
     legend+=irradiation;
@@ -81,11 +88,37 @@ class configFileContent{
     return legend;
   }
 
+
+  inline std::string GetLegend2() const{
+    std::string legend;
+    legend+=GetType();
+    legend+=" ";
+    legend+=GetThickness();
+    legend+=" um, ";
+    legend+=irradiation;
+    legend+=" cm^{-2}, ";
+    return legend;
+  }
+
   inline std::string GetThickness() const{ 
     std::string thickness= diodeName.substr(2,3);
     return thickness;
   }
 
+  inline std::string GetType()const{
+    //    boost::regex regEx("([a-z]+)([0-1]+)([PN]).*",boost::regex::extended );
+    boost::regex regEx("([FZEpi]+)([0-9]+)([PN]).*",boost::regex::extended );
+    boost::smatch sm;
+    boost::regex_match(diodeName,sm,regEx);
+    /* for(unsigned int i=0; i < sm.size(); i++){ */
+    /*   std::cout << "[REGEX] " << sm[i] << std::endl; */
+    /* } */
+    /* std::cout << "\n" << std::endl; */
+    /* std::regex e("([a-Z]+") */
+    /* std::regex_match( */
+    std::string type = sm[1]+" "+sm[3]+"-type, ";
+    return type;
+  }
 
   inline std::string GetSurface()const{
     if(diodeName.find("DiodeS")!=std::string::npos) return "4"; //"6.25";
@@ -100,7 +133,12 @@ class configFileContent{
   inline float GetTemperature(void)const{ return std::stof(temp);};
   inline std::string GetTemperatureString(void)const{ return temp;};
   inline std::string GetFluence(void)const{ return irradiation;};
-  inline std::string GetAnnealingString(void)const{ return annealing;};
+  inline std::string GetAnnealingString(void)const{ 
+    TString annString = annealing.c_str();
+    annString.ReplaceAll("@","\\\\@");
+    
+    return std::string(annString.Data());
+  };
 
   configFileContent& operator<<(std::ostream& f){
     f << type << "\t" << diodeName << "\t" << irradiation << "\t" << GetAnnealingString() << "\t" << GetThickness() << "\t" << GetTemperature()
@@ -267,7 +305,11 @@ class configFileParser{
     std::string thickness= iter->second.diodeName.substr(2,3);
     return thickness;
   }
-
+  
+  inline std::string GetType(lines_t::const_iterator iter) const{
+    std::string type = GetType(find(type));
+    return type;
+  }
 
   inline float GetTemperature(lines_t::const_iterator iter)const{
     return iter->second.GetTemperature();
@@ -290,14 +332,6 @@ class configFileParser{
   inline std::string GetLegend(std::string type) const{
     auto iter = find(type);
     return iter->second.GetLegend();
-    std::string legend;
-    legend+=GetThickness(iter);
-    legend+=" um, ";
-    legend+=GetFluence(iter);
-    legend+=" cm^{-2}, ";
-    legend+=GetTemperatureString(iter);
-    legend+=" C";
-    return legend;
   }
 
   inline bool check(std::string type){

@@ -25,7 +25,7 @@ endif
 OPT=-Wall -std=c++0x
 
 INCLUDE=-I$(INCLUDEDIR) -I$(ROOT_INCLUDE)  -I$(ROOFIT_INCLUDE) -I$(BOOST)/include
-LIB=-lboost_program_options ${ROOT_LIB}
+LIB=-lboost_program_options ${ROOT_LIB} -lboost_regex
 
 default: test link
 
@@ -52,6 +52,7 @@ ${LIBDIR}/TCTmeasurements.o: ${INCLUDEDIR}/TCTmeasurements.h ${SRCDIR}/TCTmeasur
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/TCTmeasurements.o ${SRCDIR}/TCTmeasurements.cc
 
 ${LIBDIR}/configFileParser.o: ${INCLUDEDIR}/configFileParser.h ${SRCDIR}/configFileParser.cc
+	@echo "-> Making configFileParser" 
 	@g++ ${OPT} ${INCLUDE} ${LIB} -c -o ${LIBDIR}/configFileParser.o ${SRCDIR}/configFileParser.cc
 
 ${LIBDIR}/IVmeasurement.o: ${INCLUDEDIR}/IVmeasurement.h ${SRCDIR}/IVmeasurement.cc

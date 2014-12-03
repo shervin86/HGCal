@@ -14,7 +14,10 @@
 
 std::ostream& diode::dump(std::ostream& f){
   f<< "thick\tarea\tfluence\ttemp\tbias\tQref\t\tQ\t\tCCE\t\tIV\t\tIVGR\t\tIGR\t\tCV455\t\tCV1M\t\tCV455GR\t\tCV1MGR";
-  f<< "\t" << _id << "\t\"" << _property.GetLegend()<< "\""<< "\t" << _property.GetThickness() << "\t" << _property.GetFluence() << "\t" << _property.GetTemperatureString() 
+  f<< "\t" << _id << "\t\"" << _property.GetLegend()<< "\""
+   << "\t" << _property.GetThickness() << "\t" << _property.GetFluence() << "\t" << _property.GetTemperatureString()  
+    //<< "\t\"" << _property.GetType() << ", " <<  _property.GetThickness() << ", " << _property.GetFluence() << "\"" 
+   << "\t\"" << _property.GetLegend2()<< "\""
    << std::endl;
 
   std::set<float> biases;
@@ -66,11 +69,12 @@ std::ostream& diode::dump(std::ostream& f){
     if(ivItr!=_iv.end()) f<< "\t" << ivItr->second.first;
     else f<<"\t-";
 
-
+    f<<std::setprecision(4) << std::scientific;
     auto ivGRItr=_ivGR[bias];
     if(ivGRItr!=_ivGR.end()) f<< "\t" << ivGRItr->second.first << "\t" << ivGRItr->second.second;
     else f<<"\t-\t-";
 
+    f<<std::setprecision(5) << std::scientific;
     auto cvItr=_cv[bias];
     if(cvItr!=_cv.end()){
       f<< "\t" << cvItr->second[_cv.RefFreqIndex()];
